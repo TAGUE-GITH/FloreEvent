@@ -30,6 +30,10 @@ class BookingFiles {
 				if (!wasConfirmed(booking.getStatus())) throw ApiException.notFound("La réservation n'est pas encore confirmée.");
 				yield pdf(documents.confirmation(booking), "Confirmation-" + booking.getReference() + ".pdf");
 			}
+			case "bon-de-livraison" -> {
+				if (!wasConfirmed(booking.getStatus())) throw ApiException.notFound("La réservation n'est pas encore confirmée.");
+				yield pdf(documents.deliveryNote(booking), "Bon-de-livraison-" + booking.getReference() + ".pdf");
+			}
 			default -> throw ApiException.notFound("Document introuvable.");
 		};
 	}

@@ -169,7 +169,7 @@ export type Booking = {
   distanceKm?: number
   installation: boolean
   note?: string
-  lines: { itemId: number; itemName: string; imageUrl?: string; quantity: number; dayPriceCents: number; lineTotalCents: number }[]
+  lines: BookingLine[]
   rentalCents: number
   setupCents: number
   deliveryCents: number
@@ -187,9 +187,46 @@ export type Booking = {
   balanceCents: number
   payments: Payment[]
   invoices: Invoice[]
+  deliveredAt?: string
+  returnedAt?: string
+  securityDepositMethod?: PaymentMethod
+  securityDepositReturnedCents?: number
+  damageCents: number
   createdAt: string
   events: { status: BookingStatus; label: string; note?: string; author?: string; createdAt: string }[]
 }
+
+export type BookingLine = {
+  itemId: number
+  itemName: string
+  imageUrl?: string
+  quantity: number
+  dayPriceCents: number
+  lineTotalCents: number
+  replacementValueCents: number
+  /** Vides (null) avant le retour */
+  returnedQuantity?: number | null
+  damagedQuantity?: number | null
+  missingQuantity?: number | null
+}
+
+/** Depart (livraison, retrait) ou retour (reprise, retour) du materiel. */
+export type PlanningTask = {
+  date: string
+  kind: 'LIVRAISON' | 'RETRAIT' | 'REPRISE' | 'RETOUR'
+  kindLabel: string
+  done: boolean
+  bookingId: number
+  reference: string
+  status: BookingStatus
+  customer: string
+  phone: string
+  address?: string
+  installation: boolean
+  lines: BookingLine[]
+}
+
+export type ReturnCount = { itemId: number; returned: number; damaged: number; missing: number }
 
 export type PaymentMethod = 'CARTE' | 'VIREMENT' | 'CHEQUE' | 'ESPECES'
 

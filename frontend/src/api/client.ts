@@ -13,6 +13,8 @@ import type {
   Named,
   NewUser,
   PaymentMethod,
+  PlanningTask,
+  ReturnCount,
   PublicItem,
   RegisterForm,
   SimulatedSession,
@@ -160,6 +162,14 @@ export const bookingsApi = {
   recordPayment: (id: number, payment: OfflinePayment) => data(api.post<Booking>(`/bookings/${id}/payments`, clean(payment))),
   cancellation: (id: number) => data(api.get<CancellationPreview>(`/bookings/${id}/cancellation`)),
   cancel: (id: number, reason: string) => data(api.post<Booking>(`/bookings/${id}/cancel`, { reason })),
+  deliver: (id: number, securityDepositMethod: PaymentMethod) => data(api.post<Booking>(`/bookings/${id}/deliver`, { securityDepositMethod })),
+  recordReturn: (id: number, lines: ReturnCount[], note: string) => data(api.post<Booking>(`/bookings/${id}/return`, { lines, note })),
+  close: (id: number) => data(api.post<Booking>(`/bookings/${id}/close`, {})),
+}
+
+/** Planning des livraisons et des retours. */
+export const planningApi = {
+  list: (from: string, to: string) => data(api.get<PlanningTask[]>('/planning', { params: { from, to } })),
 }
 
 /** Paiement de demonstration (sans compte Stripe) : meme chemin que la confirmation de Stripe. */

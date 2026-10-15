@@ -47,6 +47,16 @@ public class BookingLine {
 	@Column(name = "line_total_cents", nullable = false)
 	private int lineTotalCents;
 
+	/** Etat des lieux au retour (vide avant). */
+	@Column(name = "returned_quantity")
+	private Integer returnedQuantity;
+
+	@Column(name = "damaged_quantity")
+	private Integer damagedQuantity;
+
+	@Column(name = "missing_quantity")
+	private Integer missingQuantity;
+
 	protected BookingLine() {
 	}
 
@@ -59,6 +69,29 @@ public class BookingLine {
 		this.setupPriceCents = item.getSetupPriceCents();
 		this.replacementValueCents = item.getReplacementValueCents();
 		this.lineTotalCents = lineTotalCents;
+	}
+
+	void inspect(int returned, int damaged, int missing) {
+		this.returnedQuantity = returned;
+		this.damagedQuantity = damaged;
+		this.missingQuantity = missing;
+	}
+
+	/** Casse facturee : valeur de remplacement figee des exemplaires abimes ou manquants (R7). */
+	int damageCents() {
+		return ((damagedQuantity == null ? 0 : damagedQuantity) + (missingQuantity == null ? 0 : missingQuantity)) * replacementValueCents;
+	}
+
+	public Integer getReturnedQuantity() {
+		return returnedQuantity;
+	}
+
+	public Integer getDamagedQuantity() {
+		return damagedQuantity;
+	}
+
+	public Integer getMissingQuantity() {
+		return missingQuantity;
 	}
 
 	public Item getItem() {

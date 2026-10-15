@@ -102,6 +102,25 @@ public class Booking {
 	@Column(name = "cancellation_fee_cents")
 	private Integer cancellationFeeCents;
 
+	@Column(name = "delivered_at")
+	private Instant deliveredAt;
+
+	@Column(name = "returned_at")
+	private Instant returnedAt;
+
+	/** US-16 : caution remise a la livraison (non encaissee). */
+	@Enumerated(EnumType.STRING)
+	@Column(name = "security_deposit_method")
+	private PaymentMethod securityDepositMethod;
+
+	/** Caution rendue au client : la caution moins la casse retenue (R7). */
+	@Column(name = "security_deposit_returned_cents")
+	private Integer securityDepositReturnedCents;
+
+	/** US-17 : casse et manquants factures au retour. */
+	@Column(name = "damage_cents", nullable = false)
+	private int damageCents;
+
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt = Instant.now();
 
@@ -202,6 +221,29 @@ public class Booking {
 		moveTo(BookingStatus.ANNULEE, note, author);
 	}
 
+	/** US-16 : materiel livre (ou retire), caution recue. */
+	void deliver(PaymentMethod depositMethod, String note, User author) {
+		if (status != BookingStatus.CONFIRMEE) throw ApiException.badRequest("Seule une réservation confirmée peut être livrée.");
+		securityDepositMethod = depositMethod;
+		deliveredAt = Instant.now();
+		moveTo(BookingStatus.EN_COURS, note, author);
+	}
+
+	/** US-17 : materiel rendu ; la casse s'ajoute au montant du, la caution rendue est connue. */
+	void recordReturn(int damageCents, int securityDepositReturnedCents, String note, User author) {
+		if (status != BookingStatus.EN_COURS) throw ApiException.badRequest("Le matériel n'a pas encore été livré.");
+		this.damageCents = damageCents;
+		this.securityDepositReturnedCents = securityDepositReturnedCents;
+		returnedAt = Instant.now();
+		moveTo(BookingStatus.RETOURNEE, note, author);
+	}
+
+	/** Tout est paye et la caution rendue : dossier termine. */
+	void close(String note, User author) {
+		if (status != BookingStatus.RETOURNEE) throw ApiException.badRequest("Le matériel n'est pas encore rendu.");
+		moveTo(BookingStatus.CLOTUREE, note, author);
+	}
+
 	/** Evenement de l'historique sans changement d'etat (paiement rembourse, paiement recu...). */
 	void addNote(String note, User author) {
 		updatedAt = Instant.now();
@@ -215,7 +257,7 @@ public class Booking {
 	/** Somme due : le total, ou apres annulation la part gardee. */
 	public int getAmountDueCents() {
 		if (status == BookingStatus.ANNULEE) return cancellationFeeCents == null ? 0 : cancellationFeeCents;
-		return totalCents;
+		return totalCents + damageCents;
 	}
 
 	/** Paiements encaisses, remboursements deduits. */
@@ -323,6 +365,26 @@ public class Booking {
 
 	public Integer getCancellationFeeCents() {
 		return cancellationFeeCents;
+	}
+
+	public Instant getDeliveredAt() {
+		return deliveredAt;
+	}
+
+	public Instant getReturnedAt() {
+		return returnedAt;
+	}
+
+	public PaymentMethod getSecurityDepositMethod() {
+		return securityDepositMethod;
+	}
+
+	public Integer getSecurityDepositReturnedCents() {
+		return securityDepositReturnedCents;
+	}
+
+	public int getDamageCents() {
+		return damageCents;
 	}
 
 	public List<Payment> getPayments() {
