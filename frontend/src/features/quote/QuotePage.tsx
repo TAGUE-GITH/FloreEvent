@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ClipboardList, Minus, Package, Plus, Store, Trash2, Truck } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { errorMessage, fieldErrors, imageUrl, myBookingsApi, quoteApi } from '../../api/client'
+import { catalogApi, errorMessage, fieldErrors, imageUrl, myBookingsApi, quoteApi } from '../../api/client'
 import { useAuth } from '../../auth/AuthProvider'
 import { buttonClasses } from '../../components/buttonClasses'
 import { Alert, Button, Card, Checkbox, TextArea } from '../../components/ui'
@@ -42,6 +42,10 @@ export default function QuotePage() {
     },
   })
   const errors = { ...fieldErrors(estimate.error), ...fieldErrors(send.error) }
+  const prestations = useQuery({ queryKey: ['public-prestations'], queryFn: catalogApi.prestations })
+  const chosen = selection.prestationIds ?? []
+  const togglePrestation = (id: number, on: boolean) =>
+    update({ prestationIds: on ? [...chosen.filter((p) => p !== id), id] : chosen.filter((p) => p !== id) })
 
   if (selection.lines.length === 0)
     return (
@@ -130,6 +134,26 @@ export default function QuotePage() {
                 )}
               </>
             )}
+            {prestations.data && prestations.data.length > 0 && (
+              <fieldset>
+                <legend className="mb-2 font-bold">Prestations (facultatif)</legend>
+                <div className="space-y-2">
+                  {prestations.data.map((p) => (
+                    <Checkbox
+                      key={p.id}
+                      label={
+                        <>
+                          <span className="font-semibold">{p.name}</span> · à partir de {formatEuros(p.priceCents)}
+                          {p.description && <span className="block text-slate-500">{p.description}</span>}
+                        </>
+                      }
+                      checked={chosen.includes(p.id)}
+                      onChange={(event) => togglePrestation(p.id, event.target.checked)}
+                    />
+                  ))}
+                </div>
+              </fieldset>
+            )}
             <TextArea label="Votre événement (facultatif)" rows={2} value={selection.note} onChange={(event) => update({ note: event.target.value })} placeholder="Mariage, 120 invités, en extérieur…" error={errors.note} />
           </Card>
         </div>
@@ -143,6 +167,9 @@ export default function QuotePage() {
             <>
               <Row label={`Location (${e.days} jour${e.days > 1 ? 's' : ''})`} value={formatEuros(e.rentalCents)} />
               {e.setupCents > 0 && <Row label="Installation" value={formatEuros(e.setupCents)} />}
+              {e.prestations.map((p) => (
+                <Row key={p.id} label={p.name} value={formatEuros(p.priceCents)} />
+              ))}
               <Row label={e.deliveryMode === 'LIVRAISON' ? `Livraison (${e.distanceKm} km)` : 'Retrait à l’entrepôt'} value={e.deliveryCents ? formatEuros(e.deliveryCents) : 'Gratuit'} />
               <div className="flex items-baseline justify-between border-t border-stone-100 pt-2">
                 <span className="font-bold">Total TTC</span>

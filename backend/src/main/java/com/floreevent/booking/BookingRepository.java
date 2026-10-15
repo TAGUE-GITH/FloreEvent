@@ -25,6 +25,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
 	List<Booking> findByCustomerIdOrderByCreatedAtDescIdDesc(Long customerId);
 
+	List<Booking> findByStatusAndStartDate(BookingStatus status, LocalDate startDate);
+
 	/** US-14 : reservations dont le depart ou le retour tombe dans [from, to]. */
 	@Query("""
 			select b from Booking b join fetch b.customer where b.status in :statuses

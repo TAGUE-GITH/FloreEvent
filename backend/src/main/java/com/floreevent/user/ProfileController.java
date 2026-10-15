@@ -74,6 +74,7 @@ public class ProfileController {
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void changePassword(@Valid @RequestBody PasswordRequest request, @AuthenticationPrincipal User principal) {
 		User user = reload(principal);
+		if (user.isDemo()) throw ApiException.badRequest("Le mot de passe des comptes de démonstration ne peut pas être changé.");
 		if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash()))
 			throw ApiException.badRequest("Le mot de passe actuel est incorrect.");
 		user.setPasswordHash(passwordEncoder.encode(request.newPassword()));

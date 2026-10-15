@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { errorMessage, fieldErrors } from '../../api/client'
 import { homeOf, useAuth } from '../../auth/AuthProvider'
+import { DemoAccounts } from '../../components/DemoAccounts'
 import { Alert, Button, Card, Field } from '../../components/ui'
 
 // Connexion des clients du site (l'equipe se connecte sur /espace-equipe)
@@ -47,6 +48,18 @@ export default function ClientLoginPage() {
           </Button>
         </form>
       </Card>
+      <p className="mt-4 text-center text-sm">
+        <Link to="/mot-de-passe-oublie" className="font-semibold text-brand-700">
+          Mot de passe oublié ?
+        </Link>
+      </p>
+      <DemoAccounts
+        roles={['CLIENT']}
+        onPick={(pickedEmail, pickedPassword) => {
+          setEmail(pickedEmail)
+          setPassword(pickedPassword)
+        }}
+      />
       <p className="mt-6 text-center text-sm text-slate-600">
         Pas encore de compte ?{' '}
         <Link to="/inscription" state={from ? { from } : undefined} className="font-semibold text-brand-700">

@@ -129,6 +129,11 @@ public class User {
 		this.role = role;
 	}
 
+	/** Compte de la demonstration publique (adresse fictive). */
+	public boolean isDemo() {
+		return email.toLowerCase().endsWith(com.floreevent.mail.EmailService.DEMO_DOMAIN);
+	}
+
 	public boolean isActive() {
 		return active;
 	}

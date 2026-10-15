@@ -233,6 +233,7 @@ public class BookingDocuments {
 		if (b.getSetupCents() > 0) total(table, "Installation et démontage", Money.euros(b.getSetupCents()), TEXT);
 		if (b.getDeliveryMode() == DeliveryMode.LIVRAISON)
 			total(table, "Livraison et reprise (" + b.getDistanceKm() + " km)", Money.euros(b.getDeliveryCents()), TEXT);
+		for (var prestation : b.getPrestations()) total(table, "Prestation : " + prestation.getName(), Money.euros(prestation.getPriceCents()), TEXT);
 		if (b.getDiscountCents() > 0) total(table, "Remise", Money.euros(-b.getDiscountCents()), TEXT);
 		int vat = Pricing.vatIncluded(b.getTotalCents());
 		total(table, "Total HT", Money.euros(b.getTotalCents() - vat), TEXT);

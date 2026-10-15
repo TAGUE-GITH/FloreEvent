@@ -4,9 +4,9 @@ Application web de **location de matériel et de services événementiels** (ten
 décoration florale…) pour FloreEvent, à Melun (Seine-et-Marne) : catalogue en ligne, disponibilités par dates, devis calculés
 automatiquement, acompte par carte, planning des livraisons, état des lieux au retour.
 
-> **État du projet :** Sprint 4 terminé (planning des livraisons et retours, bon de livraison PDF, caution, état des lieux au retour,
-> casse facturée et retenue sur la caution). Sprint 3 : devis, acompte Stripe (test), factures PDF, annulation.
-> Prochain sprint : traitement des demandes, acompte par carte (Stripe, mode test), devis et factures PDF.
+> **État du projet :** Sprints 0 à 6 terminés : catalogue et disponibilités, devis en ligne, acompte Stripe (test), factures PDF,
+> logistique (planning, livraisons, retours, caution), prestations, emails, tableau de bord, site vitrine et démonstration.
+> Mise en ligne : voir [DEPLOIEMENT.md](DEPLOIEMENT.md).
 
 ## Le besoin
 
@@ -40,13 +40,13 @@ facturée. FloreEvent **digitalise toute la chaîne**, de la demande du client a
 | 2 | Disponibilités par dates, catalogue public, compte client, demande de devis | ✅ |
 | 3 | Réservations, acompte par carte (Stripe test), devis et factures PDF, annulation | ✅ |
 | 4 | Planning logistique, livraisons, retours et état des lieux, caution et casse | ✅ |
-| 5 | Services, emails, tableau de bord | À venir |
-| 6 | Site vitrine, mot de passe oublié, démonstration, mise en ligne | À venir |
+| 5 | Services, emails, tableau de bord | ✅ |
+| 6 | Site vitrine, mot de passe oublié, démonstration, mise en ligne | ✅ |
 
 ## Lancer le projet en local
 
 ```bash
-cd backend && ./mvnw spring-boot:run      # API sur http://localhost:8080 (base H2 en mémoire)
+cd backend && ./mvnw spring-boot:run      # API sur http://localhost:8080 (base H2 en mémoire ; APP_DEMO=true pour la démo)
 cd frontend && npm install && npm run dev # site sur http://localhost:5173
 ```
 
@@ -68,8 +68,8 @@ remboursé automatiquement si le matériel a été réservé entre-temps (R2).
 ## Tests
 
 ```bash
-cd backend && ./mvnw test    # 67 tests : JUnit 5, MockMvc
-cd frontend && npm test      # 36 tests : Vitest, Testing Library
+cd backend && ./mvnw test    # 76 tests : JUnit 5, MockMvc
+cd frontend && npm test      # 39 tests : Vitest, Testing Library
 ```
 
 Les tests sont écrits avant le code (TDD) à partir des critères d'acceptation. GitHub Actions les exécute à chaque envoi, avec une

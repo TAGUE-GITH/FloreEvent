@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { CalendarCheck, ChevronRight, LogOut, Plus } from 'lucide-react'
+import { CalendarCheck, ChevronRight, LogOut, Plus, UserRound } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { errorMessage, myBookingsApi } from '../../api/client'
 import { useAuth } from '../../auth/AuthProvider'
@@ -22,10 +22,16 @@ export default function ClientSpacePage() {
           <h1 className="text-3xl font-extrabold tracking-tight">Mon espace</h1>
           <p className="mt-1 text-slate-600">Bonjour {user?.firstName}, bienvenue chez FloreEvent.</p>
         </div>
-        <Button variant="ghost" onClick={logout}>
-          <LogOut className="size-4" aria-hidden />
-          Se déconnecter
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Link to="/mon-espace/profil" className={buttonClasses('secondary')}>
+            <UserRound className="size-4" aria-hidden />
+            Mon profil
+          </Link>
+          <Button variant="ghost" onClick={logout}>
+            <LogOut className="size-4" aria-hidden />
+            Se déconnecter
+          </Button>
+        </div>
       </div>
       {welcome && (
         <div className="mb-6">

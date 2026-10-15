@@ -3,6 +3,10 @@ import type {
   Booking,
   BookingRequest,
   CancellationPreview,
+  ContactForm,
+  ContactMessage,
+  Dashboard,
+  DemoInfo,
   BookingSummary,
   Category,
   Estimate,
@@ -13,6 +17,7 @@ import type {
   Named,
   NewUser,
   PaymentMethod,
+  Prestation,
   PlanningTask,
   ReturnCount,
   PublicItem,
@@ -82,6 +87,34 @@ export const authApi = {
   login: (email: string, password: string) => data(api.post<{ token: string; user: User }>('/auth/login', { email, password })),
   me: () => data(api.get<User>('/auth/me')),
   register: (form: RegisterForm) => data(api.post<{ token: string; user: User }>('/auth/register', clean(form))),
+  forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
+  resetPassword: (token: string, password: string) => api.post('/auth/reset-password', { token, password }),
+}
+
+/** Le site est-il une demonstration ? Avec quels comptes s'y connecter ? */
+export const demoApi = {
+  info: () => data(api.get<DemoInfo>('/demo')),
+}
+
+export type PrestationForm = { name: string; description: string; priceCents: number; active: boolean }
+
+/** US-18 : prestations, gerees par le gerant. */
+export const prestationsApi = {
+  list: () => data(api.get<Prestation[]>('/prestations')),
+  save: (form: PrestationForm, id?: number) =>
+    data(id ? api.put<Prestation>(`/prestations/${id}`, clean(form)) : api.post<Prestation>('/prestations', clean(form))),
+}
+
+/** US-21 : formulaire de contact du site et messages recus par l'equipe. */
+export const contactApi = {
+  send: (form: ContactForm) => data(api.post<ContactMessage>('/contact', clean(form))),
+  list: () => data(api.get<ContactMessage[]>('/contact-messages')),
+  handled: (id: number) => data(api.post<ContactMessage>(`/contact-messages/${id}/handled`, {})),
+}
+
+/** US-20 : tableau de bord de l'equipe. */
+export const dashboardApi = {
+  get: () => data(api.get<Dashboard>('/dashboard')),
 }
 
 /** Espace personnel : informations, mot de passe et photo de chaque utilisateur. */
@@ -134,6 +167,7 @@ export const catalogApi = {
     data(api.get<PublicItem[]>('/catalog/items', { params: clean(filters) })),
   item: (id: number, period: Period = {}) => data(api.get<PublicItem>(`/catalog/items/${id}`, { params: clean(period) })),
   categories: () => data(api.get<Named[]>('/catalog/categories')),
+  prestations: () => data(api.get<Prestation[]>('/catalog/prestations')),
 }
 
 export const quoteApi = {

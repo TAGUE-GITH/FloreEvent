@@ -39,6 +39,7 @@ describe('selection de materiel (le devis en cours)', () => {
       installation: false,
       note: 'Mariage',
       lines: [{ itemId: 1, quantity: 2 }],
+      prestationIds: [],
     })
   })
 

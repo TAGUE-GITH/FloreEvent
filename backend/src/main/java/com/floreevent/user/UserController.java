@@ -70,6 +70,8 @@ public class UserController {
 		if (request.firstName() != null) user.setFirstName(request.firstName().trim());
 		if (request.lastName() != null) user.setLastName(request.lastName().trim());
 		if (request.phone() != null) user.setPhone(request.phone());
+		if (user.isDemo() && (request.role() != null || Boolean.FALSE.equals(request.active())))
+			throw ApiException.badRequest("Les comptes de démonstration ne peuvent pas être modifiés : ils servent à tous les visiteurs.");
 		if (request.role() != null) user.setRole(request.role());
 		if (request.active() != null) user.setActive(request.active());
 		return UserResponse.of(user);

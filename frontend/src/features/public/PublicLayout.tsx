@@ -4,6 +4,7 @@ import { Link, NavLink, Outlet } from 'react-router-dom'
 import { homeOf, useAuth } from '../../auth/AuthProvider'
 import { Avatar } from '../../components/Avatar'
 import { buttonClasses } from '../../components/buttonClasses'
+import { COMPANY, OPENING_HOURS } from '../../lib/company'
 import { useSelection } from '../quote/Selection'
 
 // Annee du pied de page, calculee une fois au chargement
@@ -12,6 +13,7 @@ const YEAR = new Date().getFullYear()
 const LINKS = [
   { to: '/', label: 'Accueil' },
   { to: '/catalogue', label: 'Catalogue' },
+  { to: '/contact', label: 'Contact' },
 ]
 
 function Logo() {
@@ -106,12 +108,34 @@ export default function PublicLayout() {
       </main>
 
       <footer className="border-t border-stone-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 text-sm text-slate-600 sm:px-6 md:grid-cols-3">
           <div>
             <Logo />
             <p className="mt-2">Location de matériel et décoration pour vos événements, à Melun et alentours.</p>
           </div>
-          <div className="flex flex-wrap gap-x-5 gap-y-2">
+          <div className="space-y-1.5">
+            <p className="font-bold text-ink">Nous joindre</p>
+            <p>{COMPANY.address}</p>
+            <a href={`tel:${COMPANY.phone.replace(/\s/g, '')}`} className="block hover:text-brand-700">
+              {COMPANY.phone}
+            </a>
+            <a href={`mailto:${COMPANY.email}`} className="block hover:text-brand-700">
+              {COMPANY.email}
+            </a>
+            {OPENING_HOURS.map((h) => (
+              <p key={h.days}>
+                {h.days} : {h.hours}
+              </p>
+            ))}
+          </div>
+          <div className="flex flex-col gap-y-2">
+            <p className="font-bold text-ink">Informations</p>
+            <Link to="/contact" className="hover:text-brand-700">
+              Contact
+            </Link>
+            <Link to="/mentions-legales" className="hover:text-brand-700">
+              Mentions légales
+            </Link>
             <Link to="/conditions-generales" className="hover:text-brand-700">
               Conditions générales
             </Link>
