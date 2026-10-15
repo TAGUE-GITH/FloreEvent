@@ -6,6 +6,7 @@ import { BookingDetails } from '../../components/BookingDetails'
 import { Alert, Badge, Loader, PageHeader } from '../../components/ui'
 import { bookingTone } from '../../lib/bookings'
 import { formatPeriod } from '../../lib/format'
+import { BookingActions } from './BookingActions'
 
 // Detail d'une demande ou d'une reservation pour l'equipe
 export default function BookingDetailPage() {
@@ -22,8 +23,12 @@ export default function BookingDetailPage() {
         ← Réservations
       </Link>
       <PageHeader title={`${b.reference} · ${b.customer.fullName}`} subtitle={`Location ${formatPeriod(b.startDate, b.endDate)}`} actions={<Badge tone={bookingTone(b.status)}>{b.statusLabel}</Badge>} />
+      <div className="mb-6 max-w-3xl">
+        <BookingActions booking={b} />
+      </div>
       <BookingDetails
         booking={b}
+        filesPath={`/bookings/${b.id}`}
         aside={
           <div className="space-y-1.5 border-t border-stone-100 pt-3">
             <p className="font-bold">Client</p>

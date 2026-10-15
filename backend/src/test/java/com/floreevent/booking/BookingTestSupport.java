@@ -1,18 +1,26 @@
 package com.floreevent.booking;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.web.servlet.ResultActions;
 
 import com.jayway.jsonpath.JsonPath;
 import com.floreevent.IntegrationTest;
 import com.floreevent.common.Dates;
+import com.floreevent.payment.PaymentGateway;
+import com.floreevent.payment.StripeSignature;
 import com.floreevent.quote.Geocoder;
 import com.floreevent.user.Role;
 
@@ -34,6 +42,7 @@ abstract class BookingTestSupport extends IntegrationTest {
 	protected long tents;
 	protected long chairs;
 	private int clients;
+	private int sessions;
 
 	@BeforeEach
 	void setUpCatalog() throws Exception {
@@ -43,6 +52,11 @@ abstract class BookingTestSupport extends IntegrationTest {
 		chairs = item(category, "CHAISE", "Chaise Napoléon", 350, 4500, 0, 120);
 		// Fontainebleau : environ 19 km de Melun par la route (zone 2 : 70 €)
 		when(geocoder.locate(anyString())).thenReturn(Optional.of(new Geocoder.Location("5 Rue Grande 77300 Fontainebleau", 48.4047, 2.7016)));
+		// Chaque ouverture de la page de paiement cree une nouvelle session Stripe
+		when(gateway.checkout(any())).thenAnswer(call -> {
+			sessions++;
+			return new PaymentGateway.Checkout("cs_test_" + sessions, "https://checkout.stripe.com/c/pay/cs_test_" + sessions);
+		});
 	}
 
 	protected long item(long category, String reference, String name, int dayPrice, int replacement, int setup, int quantity) throws Exception {
@@ -78,5 +92,39 @@ abstract class BookingTestSupport extends IntegrationTest {
 		jdbc.update("update booking set status = 'CONFIRMEE' where id = ?", id);
 		entityManager.clear();
 		return id;
+	}
+
+	/** Demande du client (retrait), puis devis envoye par le gerant sans remise. */
+	protected long quoted(String client, LocalDate start, LocalDate end, long item, int quantity) throws Exception {
+		long id = idOf(postAs(client, "/api/me/bookings", request(start, end, "RETRAIT", null, false, item, quantity)));
+		postAs(manager, "/api/bookings/{id}/quote", "{}", id).andExpect(status().isOk());
+		return id;
+	}
+
+	/** Le client accepte le devis et ouvre la page de paiement : identifiant de la session Stripe. */
+	protected String checkout(String client, long id) throws Exception {
+		String url = JsonPath.read(body(postAs(client, "/api/me/bookings/{id}/checkout", "{}", id).andExpect(status().isOk())), "$.url");
+		return url.substring(url.lastIndexOf('/') + 1);
+	}
+
+	/** Stripe previent que la session est payee : message signe avec le secret du webhook. */
+	protected ResultActions webhook(String sessionId) throws Exception {
+		String payload = """
+				{"id": "evt_%s", "type": "checkout.session.completed",
+				 "data": {"object": {"id": "%s", "payment_intent": "pi_%s", "payment_status": "paid"}}}""".formatted(sessionId, sessionId, sessionId);
+		long timestamp = Instant.now().getEpochSecond();
+		return mockMvc.perform(post("/api/stripe/webhook").contentType(MediaType.APPLICATION_JSON).content(payload)
+				.header("Stripe-Signature", "t=" + timestamp + ",v1=" + StripeSignature.sign(timestamp + "." + payload, WEBHOOK_SECRET)));
+	}
+
+	/** Reservation payee par carte : devis, page de paiement, confirmation de Stripe. */
+	protected long paidByCard(String client, LocalDate start, LocalDate end, long item, int quantity) throws Exception {
+		long id = quoted(client, start, end, item, quantity);
+		webhook(checkout(client, id)).andExpect(status().isOk());
+		return id;
+	}
+
+	protected static String body(ResultActions result) throws Exception {
+		return result.andReturn().getResponse().getContentAsString();
 	}
 }

@@ -175,8 +175,48 @@ export type Booking = {
   deliveryCents: number
   totalCents: number
   vatCents: number
+  discountCents: number
   depositCents: number
   securityDepositCents: number
+  quoteMessage?: string
+  quoteValidUntil?: string
+  quoteExpired: boolean
+  cancellationFeeCents?: number
+  amountDueCents: number
+  paidCents: number
+  balanceCents: number
+  payments: Payment[]
+  invoices: Invoice[]
   createdAt: string
   events: { status: BookingStatus; label: string; note?: string; author?: string; createdAt: string }[]
 }
+
+export type PaymentMethod = 'CARTE' | 'VIREMENT' | 'CHEQUE' | 'ESPECES'
+
+export type Payment = {
+  id: number
+  method: PaymentMethod
+  methodLabel: string
+  status: 'EN_ATTENTE' | 'PAYE' | 'REMBOURSE'
+  statusLabel: string
+  amountCents: number
+  refundedCents: number
+  note?: string
+  author?: string
+  createdAt: string
+  paidAt?: string
+}
+
+export type Invoice = {
+  id: number
+  number: string
+  kind: 'ACOMPTE' | 'SOLDE' | 'AVOIR'
+  kindLabel: string
+  amountCents: number
+  issuedAt: string
+}
+
+/** Ce que couterait une annulation aujourd'hui. */
+export type CancellationPreview = { retainedCents: number; refundCents: number; dueCents: number; rule: string }
+
+export type SimulatedSession = { bookingId: number; reference: string; amountCents: number }
