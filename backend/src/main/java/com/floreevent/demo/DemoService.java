@@ -105,6 +105,12 @@ public class DemoService {
 			new DemoItem("PACK-DJ", "Pack DJ (contrôleur et enceintes)", "Lumière et son", 15000, 150000, 5000, 2, "1791983915272-38520e748dc6",
 					"Contrôleur DJ, deux enceintes et caisson de basses : tout pour faire danser vos invités."));
 
+	/** Ce que la demonstration cree : supprime au passage en mode reel (DemoPurge). */
+	static final List<String> ITEM_REFERENCES = ITEMS.stream().map(DemoItem::reference).toList();
+	static final List<String> CATEGORY_NAMES = ITEMS.stream().map(DemoItem::category).distinct().toList();
+	static final List<String> PRESTATION_NAMES = List.of("Décoration florale sur mesure", "Mise en place de la salle", "Animation DJ (soirée)",
+			"Éclairage d'ambiance");
+
 	private static final Logger log = LoggerFactory.getLogger(DemoService.class);
 
 	private final UserRepository users;

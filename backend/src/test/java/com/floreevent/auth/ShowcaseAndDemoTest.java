@@ -18,6 +18,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.floreevent.IntegrationTest;
+import com.floreevent.demo.DemoPurge;
 import com.floreevent.demo.DemoService;
 import com.floreevent.quote.Geocoder;
 import com.floreevent.user.Role;
@@ -28,6 +29,12 @@ class ShowcaseAndDemoTest extends IntegrationTest {
 
 	@Autowired
 	private DemoService demo;
+
+	@Autowired
+	private DemoPurge purge;
+
+	@Autowired
+	private jakarta.persistence.EntityManager entityManager;
 
 	@Test
 	void aForgottenPasswordIsResetWithASingleUseLink() throws Exception {
@@ -93,5 +100,33 @@ class ShowcaseAndDemoTest extends IntegrationTest {
 		verify(emails, never()).send(startsWith("x"), anyString(), anyString(), anyList(), anyString(), anyString(), anyString());
 		// Demo desactivee dans les tests : les pages de connexion n'affichent pas de comptes
 		getAs(null, "/api/demo").andExpect(jsonPath("$.enabled").value(false));
+	}
+
+	@Test
+	void switchingToRealModeRemovesTheDemoButKeepsRealData() throws Exception {
+		org.mockito.Mockito.when(geocoder.locate(anyString()))
+				.thenReturn(Optional.of(new Geocoder.Location("12 Rue Saint-Barthélemy 77000 Melun", 48.5397, 2.6553)));
+		String owner = tokenFor(createUser(Role.GERANT, "proprietaire@floreevent.fr"));
+		long category = ((Number) JsonPath.read(postAs(owner, "/api/categories", "{\"name\": \"Vaisselle\"}").andReturn().getResponse()
+				.getContentAsString(), "$.id")).longValue();
+		postAs(owner, "/api/items", """
+				{"reference": "PLAT-OVALE", "name": "Plat ovale", "categoryId": %d, "dayPriceCents": 300, "replacementValueCents": 2000,
+				 "quantity": 10, "active": true}""".formatted(category)).andExpect(status().isCreated());
+		postAs(null, "/api/contact", "{\"name\": \"Vrai client\", \"email\": \"vrai@client.fr\", \"message\": \"Bonjour\"}");
+		demo.seed(false);
+
+		entityManager.flush();
+		assertThat(purge.purge()).isTrue();
+		assertThat(purge.purge()).isFalse();
+		entityManager.clear();
+
+		postAs(null, "/api/auth/login", "{\"email\": \"gerant@demo.floreevent.fr\", \"password\": \"%s\"}".formatted(DemoService.PASSWORD))
+				.andExpect(status().isUnauthorized());
+		getAs(null, "/api/catalog/items").andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].name").value("Plat ovale"));
+		getAs(null, "/api/catalog/prestations").andExpect(jsonPath("$.length()").value(0));
+		getAs(owner, "/api/bookings").andExpect(jsonPath("$.length()").value(0));
+		getAs(owner, "/api/contact-messages").andExpect(jsonPath("$.length()").value(1));
+		getAs(owner, "/api/categories").andExpect(jsonPath("$.length()").value(1));
+		getAs(owner, "/api/users").andExpect(jsonPath("$[?(@.email =~ /.*demo.*/)]").isEmpty());
 	}
 }
