@@ -4,8 +4,8 @@ Application web de **location de matériel et de services événementiels** (ten
 décoration florale…) pour FloreEvent, à Melun (Seine-et-Marne) : catalogue en ligne, disponibilités par dates, devis calculés
 automatiquement, acompte par carte, planning des livraisons, état des lieux au retour.
 
-> **État du projet :** Sprint 1 terminé (comptes et rôles, catalogue de location avec photos, matériel en réparation).
-> Prochain sprint : disponibilités par dates, catalogue public, compte client, demande de devis.
+> **État du projet :** Sprint 2 terminé (disponibilités par dates, catalogue public, devis calculé en ligne, comptes clients).
+> Prochain sprint : traitement des demandes, acompte par carte (Stripe, mode test), devis et factures PDF.
 
 ## Le besoin
 
@@ -36,7 +36,7 @@ facturée. FloreEvent **digitalise toute la chaîne**, de la demande du client a
 |---|---|---|
 | 0 | Analyse des besoins, conception, environnement, intégration continue | ✅ |
 | 1 | Comptes et rôles, catalogue, stock et matériel en réparation | ✅ |
-| 2 | Disponibilités par dates, catalogue public, compte client, demande de devis | À venir |
+| 2 | Disponibilités par dates, catalogue public, compte client, demande de devis | ✅ |
 | 3 | Réservations, acompte par carte (Stripe test), devis et factures PDF, annulation | À venir |
 | 4 | Planning logistique, livraisons, retours et état des lieux, caution et casse | À venir |
 | 5 | Services, emails, tableau de bord | À venir |
@@ -54,8 +54,8 @@ Avec Docker (API + PostgreSQL) : `docker compose up --build`.
 ## Tests
 
 ```bash
-cd backend && ./mvnw test    # 28 tests : JUnit 5, MockMvc
-cd frontend && npm test      # 21 tests : Vitest, Testing Library
+cd backend && ./mvnw test    # 44 tests : JUnit 5, MockMvc
+cd frontend && npm test      # 29 tests : Vitest, Testing Library
 ```
 
 Les tests sont écrits avant le code (TDD) à partir des critères d'acceptation. GitHub Actions les exécute à chaque envoi, avec une

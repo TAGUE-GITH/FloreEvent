@@ -64,6 +64,9 @@ public class ProfileController {
 		user.setFirstName(request.firstName().trim());
 		user.setLastName(request.lastName().trim());
 		user.setPhone(request.phone());
+		// Un client garde sa fiche client a jour (l'equipe voit son vrai nom et son numero)
+		if (user.getCustomer() != null && request.phone() != null && !request.phone().isBlank())
+			user.getCustomer().update(user.getFullName(), user.getCustomer().getCompany(), request.phone());
 		return UserResponse.of(user);
 	}
 

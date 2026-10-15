@@ -2,6 +2,7 @@ package com.floreevent.user;
 
 import java.time.Instant;
 
+import com.floreevent.customer.Customer;
 import com.floreevent.image.Image;
 
 import jakarta.persistence.Column;
@@ -56,6 +57,17 @@ public class User {
 	private Image avatar;
 
 	/** Fiche client des comptes CLIENT (ventes, reparations, formations a son nom). */
+
+	/** Compte client : relie a sa fiche client (reservations, factures). */
+	@OneToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "customer_id")
+	private Customer customer;
+
+	@Column(name = "terms_accepted_at")
+	private Instant termsAcceptedAt;
+
+	@Column(name = "terms_version")
+	private String termsVersion;
 
 	protected User() {
 	}
@@ -139,5 +151,27 @@ public class User {
 
 	public void setAvatar(Image avatar) {
 		this.avatar = avatar;
+	}
+
+	public Customer getCustomer() {
+		return customer;
+	}
+
+	public void setCustomer(Customer customer) {
+		this.customer = customer;
+	}
+
+	/** Conditions generales et politique de confidentialite acceptees (version lue et date). */
+	public void acceptTerms(String version) {
+		termsVersion = version;
+		termsAcceptedAt = Instant.now();
+	}
+
+	public Instant getTermsAcceptedAt() {
+		return termsAcceptedAt;
+	}
+
+	public String getTermsVersion() {
+		return termsVersion;
 	}
 }
