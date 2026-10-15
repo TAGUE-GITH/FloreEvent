@@ -4,7 +4,8 @@ import { Link, NavLink, Outlet } from 'react-router-dom'
 import { homeOf, useAuth } from '../../auth/AuthProvider'
 import { Avatar } from '../../components/Avatar'
 import { buttonClasses } from '../../components/buttonClasses'
-import { COMPANY, OPENING_HOURS } from '../../lib/company'
+import { OpeningHours } from '../../components/OpeningHours'
+import { COMPANY } from '../../lib/company'
 import { useSelection } from '../quote/Selection'
 
 // Annee du pied de page, calculee une fois au chargement
@@ -116,17 +117,13 @@ export default function PublicLayout() {
           <div className="space-y-1.5">
             <p className="font-bold text-ink">Nous joindre</p>
             <p>{COMPANY.address}</p>
-            <a href={`tel:${COMPANY.phone.replace(/\s/g, '')}`} className="block hover:text-brand-700">
+            <a href={`tel:${COMPANY.phoneLink}`} className="block hover:text-brand-700">
               {COMPANY.phone}
             </a>
             <a href={`mailto:${COMPANY.email}`} className="block hover:text-brand-700">
               {COMPANY.email}
             </a>
-            {OPENING_HOURS.map((h) => (
-              <p key={h.days}>
-                {h.days} : {h.hours}
-              </p>
-            ))}
+            <OpeningHours className="pt-1" />
           </div>
           <div className="flex flex-col gap-y-2">
             <p className="font-bold text-ink">Informations</p>

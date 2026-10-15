@@ -1,11 +1,12 @@
 import { useMutation } from '@tanstack/react-query'
-import { Clock, Mail, MapPin, Phone, Send } from 'lucide-react'
+import { Mail, MapPin, MessageCircle, Phone, Send } from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { contactApi, errorMessage, fieldErrors } from '../../api/client'
 import type { ContactForm } from '../../api/types'
 import { Alert, Button, Card, Field, TextArea } from '../../components/ui'
-import { COMPANY, OPENING_HOURS } from '../../lib/company'
+import { OpeningHours } from '../../components/OpeningHours'
+import { COMPANY } from '../../lib/company'
 
 const EMPTY: ContactForm = { name: '', email: '', phone: '', eventDate: '', message: '' }
 
@@ -48,25 +49,19 @@ export default function ContactPage() {
             <MapPin className="mt-0.5 size-4 shrink-0 text-brand-700" aria-hidden />
             {COMPANY.address}
           </p>
-          <a href={`tel:${COMPANY.phone.replace(/\s/g, '')}`} className="flex gap-2 font-semibold text-brand-700">
+          <a href={`tel:${COMPANY.phoneLink}`} className="flex gap-2 font-semibold text-brand-700">
             <Phone className="mt-0.5 size-4 shrink-0" aria-hidden />
             {COMPANY.phone}
+          </a>
+          <a href={COMPANY.whatsapp} target="_blank" rel="noreferrer" className="flex gap-2 font-semibold text-emerald-700">
+            <MessageCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+            Écrire sur WhatsApp
           </a>
           <a href={`mailto:${COMPANY.email}`} className="flex gap-2 font-semibold text-brand-700">
             <Mail className="mt-0.5 size-4 shrink-0" aria-hidden />
             {COMPANY.email}
           </a>
-          <div className="flex gap-2">
-            <Clock className="mt-0.5 size-4 shrink-0 text-brand-700" aria-hidden />
-            <dl className="space-y-1">
-              {OPENING_HOURS.map((h) => (
-                <div key={h.days}>
-                  <dt className="font-semibold">{h.days}</dt>
-                  <dd className="text-slate-600">{h.hours}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
+          <OpeningHours className="text-slate-700" />
           <p className="text-slate-600">Zone d’intervention : {COMPANY.area}.</p>
         </Card>
       </div>

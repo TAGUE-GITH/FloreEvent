@@ -1,22 +1,18 @@
-// Coordonnees affichees sur le site. A completer par FloreEvent (telephone, adresse exacte, horaires, SIRET) :
-// ce sont des valeurs de demonstration.
+// Coordonnees affichees sur le site (adresse exacte et SIRET a completer par FloreEvent).
+// Les horaires sont dans lib/hours.ts.
 
 export const COMPANY = {
   name: 'FloreEvent',
   city: 'Melun',
   area: 'Melun et la Seine-et-Marne (jusqu’à 50 km)',
   address: 'Entrepôt de Melun (77000)',
-  phone: '01 64 00 00 00',
+  phone: '+33 6 68 98 88 53',
+  /** Numero pour les liens « appeler » et WhatsApp */
+  phoneLink: '+33668988853',
+  whatsapp: 'https://wa.me/33668988853',
   email: 'contact@floreevent.fr',
   mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Melun%2077000',
 }
-
-/** Horaires de l'entrepot (retraits, retours et rendez-vous). */
-export const OPENING_HOURS: { days: string; hours: string }[] = [
-  { days: 'Lundi au vendredi', hours: '9 h – 18 h 30' },
-  { days: 'Samedi', hours: '9 h – 13 h (retraits et retours)' },
-  { days: 'Dimanche', hours: 'Fermé (livraisons possibles sur devis)' },
-]
 
 /** Zones de livraison depuis Melun (memes regles que le calcul du devis). */
 export const DELIVERY_ZONES: { upTo: string; price: string }[] = [

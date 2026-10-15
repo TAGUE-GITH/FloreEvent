@@ -23,6 +23,14 @@ services:
         generateValue: true
       - key: FRONTEND_URL
         sync: false
+      # Compte du proprietaire (gerant) : cree au demarrage s'il n'existe pas. Supprimer BOOTSTRAP_PASSWORD ensuite.
+      - key: BOOTSTRAP_EMAIL
+        sync: false
+      - key: BOOTSTRAP_PASSWORD
+        sync: false
+      # Adresse qui recoit les messages du formulaire de contact
+      - key: COMPANY_EMAIL
+        sync: false
       # Site de demonstration (portfolio) : donnees fictives et comptes publics. false pour la vraie entreprise.
       - key: APP_DEMO
         value: "true"

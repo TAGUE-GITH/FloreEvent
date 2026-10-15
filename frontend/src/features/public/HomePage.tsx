@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, CalendarCheck, Check, ClipboardList, CreditCard, Flower2, MapPin, Package, PartyPopper, Phone, ShieldCheck, Sparkles, Truck } from 'lucide-react'
+import { ArrowRight, CalendarCheck, MessageCircle, Check, ClipboardList, CreditCard, Flower2, MapPin, Package, PartyPopper, Phone, ShieldCheck, Sparkles, Truck } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { catalogApi, imageUrl } from '../../api/client'
 import { buttonClasses } from '../../components/buttonClasses'
-import { COMPANY, DELIVERY_ZONES, OPENING_HOURS } from '../../lib/company'
+import { OpeningHours } from '../../components/OpeningHours'
+import { COMPANY, DELIVERY_ZONES } from '../../lib/company'
 import { formatEuros } from '../../lib/format'
 import { Picture } from '../../components/Picture'
 import { PHOTOS } from '../../lib/photos'
@@ -184,18 +185,17 @@ export default function HomePage() {
             <MapPin className="mt-1 size-5 shrink-0 text-brand-300" aria-hidden />
             {COMPANY.address}
           </p>
-          <dl className="mt-5 space-y-1.5 text-sm">
-            {OPENING_HOURS.map((h) => (
-              <div key={h.days} className="flex flex-wrap justify-between gap-x-4">
-                <dt className="font-semibold">{h.days}</dt>
-                <dd className="text-brand-50">{h.hours}</dd>
-              </div>
-            ))}
-          </dl>
+          <div className="mt-5 inline-block rounded-2xl bg-white px-4 py-3 text-ink">
+            <OpeningHours />
+          </div>
           <div className="mt-6 flex flex-wrap gap-3">
-            <a href={`tel:${COMPANY.phone.replace(/\s/g, '')}`} className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-ink hover:bg-stone-100">
+            <a href={`tel:${COMPANY.phoneLink}`} className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-ink hover:bg-stone-100">
               <Phone className="size-4" aria-hidden />
               {COMPANY.phone}
+            </a>
+            <a href={COMPANY.whatsapp} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-600">
+              <MessageCircle className="size-4" aria-hidden />
+              WhatsApp
             </a>
             <Link to="/contact" className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold ring-1 ring-white/40 hover:bg-white/10">
               Nous écrire
