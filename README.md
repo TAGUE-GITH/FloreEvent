@@ -1,0 +1,67 @@
+# FloreEvent — location événementielle à Melun
+
+Application web de **location de matériel et de services événementiels** (tentes, mobilier, vaisselle, sonorisation,
+décoration florale…) pour FloreEvent, à Melun (Seine-et-Marne) : catalogue en ligne, disponibilités par dates, devis calculés
+automatiquement, acompte par carte, planning des livraisons, état des lieux au retour.
+
+> **État du projet :** Sprint 0 terminé (analyse des besoins, conception, environnement, intégration continue).
+> Prochain sprint : comptes et rôles, catalogue, stock.
+
+## Le besoin
+
+Les demandes arrivent par téléphone et par email, les disponibilités se vérifient à la main et les devis se font sur tableur :
+risque de louer deux fois le même matériel aux mêmes dates, devis lents, planning des livraisons difficile à suivre, casse non
+facturée. FloreEvent **digitalise toute la chaîne**, de la demande du client au retour du matériel.
+
+## Conception (Sprint 0)
+
+| Document | Contenu |
+|---|---|
+| [Cahier des charges](docs/01-cahier-des-charges.md) | Contexte, hypothèses à confirmer, rôles, règles métier (disponibilité, prix figés, caution…) |
+| [Récits utilisateurs](docs/02-user-stories.md) | 24 récits répartis en 6 sprints, critères d'acceptation, définition de « terminé » |
+| [Modèle de données](docs/03-modele-de-donnees.md) | Schéma des tables et calcul de la disponibilité par période |
+| [Architecture](docs/04-architecture.md) | Spring Boot, React, PostgreSQL, Stripe, API Adresse, Brevo |
+| [Organisation](docs/05-organisation.md) | Méthode, planning des sprints, confidentialité des données |
+
+## Technologies
+
+- **Serveur :** Java 21, Spring Boot 4 (Web, Validation, Data JPA, Security, Flyway), PostgreSQL, JUnit 5, Mockito
+- **Site :** React 19, TypeScript, Vite, Tailwind CSS 4, React Router, TanStack Query, Vitest, Testing Library
+- **Services :** Stripe (paiement de l'acompte, mode test), API Adresse de l'État (distance de livraison), Brevo (emails)
+- **Outils :** Docker, GitHub Actions (tests sur PostgreSQL à chaque envoi), Render, Neon, Vercel
+
+## Planning
+
+| Sprint | Contenu | État |
+|---|---|---|
+| 0 | Analyse des besoins, conception, environnement, intégration continue | ✅ |
+| 1 | Comptes et rôles, catalogue, stock et matériel en réparation | À venir |
+| 2 | Disponibilités par dates, catalogue public, compte client, demande de devis | À venir |
+| 3 | Réservations, acompte par carte (Stripe test), devis et factures PDF, annulation | À venir |
+| 4 | Planning logistique, livraisons, retours et état des lieux, caution et casse | À venir |
+| 5 | Services, emails, tableau de bord | À venir |
+| 6 | Site vitrine, mot de passe oublié, démonstration, mise en ligne | À venir |
+
+## Lancer le projet en local
+
+```bash
+cd backend && ./mvnw spring-boot:run      # API sur http://localhost:8080 (base H2 en mémoire)
+cd frontend && npm install && npm run dev # site sur http://localhost:5173
+```
+
+Avec Docker (API + PostgreSQL) : `docker compose up --build`.
+
+## Tests
+
+```bash
+cd backend && ./mvnw test    # JUnit 5, MockMvc
+cd frontend && npm test      # Vitest, Testing Library
+```
+
+Les tests sont écrits avant le code (TDD) à partir des critères d'acceptation. GitHub Actions les exécute à chaque envoi, avec une
+vraie base PostgreSQL.
+
+## Confidentialité
+
+FloreEvent est une vraie entreprise : ses données ne sont jamais dans ce dépôt. La démonstration publique utilisera uniquement
+des données fictives, et les clés (base de données, Stripe, Brevo) sont saisies chez les hébergeurs.
