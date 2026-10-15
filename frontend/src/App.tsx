@@ -1,8 +1,23 @@
 import { useQuery } from '@tanstack/react-query'
 import { CalendarCheck, CreditCard, Flower2, LayoutDashboard, Package, Truck } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { Link, Route, Routes } from 'react-router-dom'
 import { healthApi } from './api/client'
+import { STAFF_ROLES } from './api/types'
+import type { Role } from './api/types'
+import { RequireAuth } from './auth/RequireAuth'
+import { buttonClasses } from './components/buttonClasses'
+import Layout from './components/Layout'
+import StaffLoginPage from './features/auth/StaffLoginPage'
+import CategoriesPage from './features/catalog/CategoriesPage'
+import ItemDetailPage from './features/catalog/ItemDetailPage'
+import ItemFormPage from './features/catalog/ItemFormPage'
+import ItemsPage from './features/catalog/ItemsPage'
+import MaintenancePage from './features/catalog/MaintenancePage'
+import StaffHomePage from './features/home/StaffHomePage'
+import ProfilePage from './features/profile/ProfilePage'
+import UsersPage from './features/users/UsersPage'
 
 type Module = { title: string; text: string; sprint: number; Icon: LucideIcon }
 
@@ -38,8 +53,11 @@ function HomePage() {
         Matériel, services, disponibilités, devis, réservations et livraisons de FloreEvent, dans un seul outil, sur ordinateur et sur
         téléphone.
       </p>
-      <div className="mt-4">
+      <div className="mt-4 flex flex-wrap items-center gap-4">
         <ApiStatus />
+        <Link to="/espace-equipe" className={buttonClasses('primary')}>
+          Espace équipe
+        </Link>
       </div>
       <ul className="mt-8 grid gap-4 sm:grid-cols-2">
         {MODULES.map(({ title, text, sprint, Icon }) => (
@@ -70,7 +88,9 @@ function NotFoundPage() {
   )
 }
 
-export default function App() {
+const only = (roles: Role[], page: ReactNode) => <RequireAuth roles={roles}>{page}</RequireAuth>
+
+function PublicShell({ children }: { children: ReactNode }) {
   return (
     <>
       <header className="border-b border-stone-200 bg-white">
@@ -83,10 +103,31 @@ export default function App() {
           </Link>
         </div>
       </header>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+      {children}
     </>
+  )
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<PublicShell><HomePage /></PublicShell>} />
+      <Route path="/espace-equipe" element={<StaffLoginPage />} />
+
+      {/* Espace de gestion : reserve a l'equipe de FloreEvent */}
+      <Route path="/gestion" element={only(STAFF_ROLES, <Layout />)}>
+        <Route index element={<StaffHomePage />} />
+        <Route path="catalogue" element={<ItemsPage />} />
+        <Route path="catalogue/nouveau" element={only(['GERANT'], <ItemFormPage />)} />
+        <Route path="catalogue/:id" element={<ItemDetailPage />} />
+        <Route path="catalogue/:id/modifier" element={only(['GERANT'], <ItemFormPage />)} />
+        <Route path="reparations" element={<MaintenancePage />} />
+        <Route path="categories" element={only(['GERANT'], <CategoriesPage />)} />
+        <Route path="equipe" element={only(['GERANT'], <UsersPage />)} />
+        <Route path="profil" element={<ProfilePage />} />
+      </Route>
+
+      <Route path="*" element={<PublicShell><NotFoundPage /></PublicShell>} />
+    </Routes>
   )
 }

@@ -1,12 +1,106 @@
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
+import type { Category, Item, ItemForm, Maintenance, MaintenanceForm, NewUser, User } from './types'
 
 // En developpement VITE_API_URL est vide : Vite transmet /api au backend (voir vite.config.ts)
 export const API_URL: string = import.meta.env.VITE_API_URL ?? ''
 
+const TOKEN_KEY = 'floreevent_token'
+
+export const tokenStore = {
+  get: () => localStorage.getItem(TOKEN_KEY),
+  set: (token: string) => localStorage.setItem(TOKEN_KEY, token),
+  clear: () => localStorage.removeItem(TOKEN_KEY),
+}
+
 export const api = axios.create({ baseURL: `${API_URL}/api` })
+
+api.interceptors.request.use((config) => {
+  const token = tokenStore.get()
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
+
+// Jeton expire ou compte desactive : on deconnecte l'utilisateur (l'ecran de connexion s'affiche)
+api.interceptors.response.use(undefined, (error: AxiosError) => {
+  if (error.response?.status === 401 && tokenStore.get() && !error.config?.url?.includes('/auth/login')) {
+    tokenStore.clear()
+    window.dispatchEvent(new Event('auth:logout'))
+  }
+  return Promise.reject(error)
+})
+
+type ApiErrorBody = { message?: string; errors?: Record<string, string> }
+
+/** Message lisible pour l'utilisateur, quelle que soit l'erreur. */
+export function errorMessage(error: unknown): string {
+  if (axios.isAxiosError<ApiErrorBody>(error)) {
+    if (!error.response) return 'Impossible de joindre le serveur. Vérifiez votre connexion Internet.'
+    if (error.response.status === 403) return 'Vous n’avez pas le droit de faire cette action.'
+    return error.response.data?.message ?? 'Une erreur est survenue. Réessayez.'
+  }
+  return 'Une erreur est survenue. Réessayez.'
+}
+
+/** Erreurs par champ renvoyees par la validation du serveur ({ "dayPriceCents": "..." }). */
+export function fieldErrors(error: unknown): Record<string, string> {
+  return axios.isAxiosError<ApiErrorBody>(error) ? (error.response?.data?.errors ?? {}) : {}
+}
+
+const data = <T>(promise: Promise<{ data: T }>) => promise.then((response) => response.data)
+
+// Les champs vides des formulaires deviennent null pour l'API
+const clean = (form: Record<string, unknown>) =>
+  Object.fromEntries(Object.entries(form).map(([key, value]) => [key, value === '' ? null : value]))
 
 export type Health = { status: string }
 
 export const healthApi = {
-  get: () => api.get<Health>('/health').then((response) => response.data),
+  get: () => data(api.get<Health>('/health')),
+}
+
+export const authApi = {
+  login: (email: string, password: string) => data(api.post<{ token: string; user: User }>('/auth/login', { email, password })),
+  me: () => data(api.get<User>('/auth/me')),
+}
+
+/** Espace personnel : informations, mot de passe et photo de chaque utilisateur. */
+export const profileApi = {
+  update: (changes: { firstName: string; lastName: string; phone: string }) => data(api.patch<User>('/me', changes)),
+  changePassword: (currentPassword: string, newPassword: string) => api.post('/me/password', { currentPassword, newPassword }),
+  setAvatar: (dataUrl: string) => data(api.put<User>('/me/avatar', { dataUrl })),
+  removeAvatar: () => data(api.delete<User>('/me/avatar')),
+}
+
+/** Les images sont servies par l'API : en production, son adresse est differente de celle du site. */
+export const imageUrl = (path?: string | null) => (path ? `${API_URL}${path}` : undefined)
+
+export const usersApi = {
+  list: () => data(api.get<User[]>('/users')),
+  create: (user: NewUser) => data(api.post<User>('/users', user)),
+  update: (id: number, changes: Partial<Pick<User, 'role' | 'active' | 'firstName' | 'lastName' | 'phone'>>) =>
+    data(api.patch<User>(`/users/${id}`, changes)),
+}
+
+export const categoriesApi = {
+  list: () => data(api.get<Category[]>('/categories')),
+  create: (name: string) => data(api.post<Category>('/categories', { name })),
+  rename: (id: number, name: string) => data(api.put<Category>(`/categories/${id}`, { name })),
+  remove: (id: number) => api.delete(`/categories/${id}`),
+}
+
+export const itemsApi = {
+  list: (filters: { q?: string; categoryId?: number | '' } = {}) => data(api.get<Item[]>('/items', { params: clean(filters) })),
+  get: (id: number) => data(api.get<Item>(`/items/${id}`)),
+  save: (form: ItemForm, id?: number) =>
+    data(id ? api.put<Item>(`/items/${id}`, clean(form)) : api.post<Item>('/items', clean(form))),
+  addImage: (id: number, dataUrl: string) => data(api.post<Item>(`/items/${id}/images`, { dataUrl })),
+  makeMain: (id: number, imageId: string) => data(api.post<Item>(`/items/${id}/images/${imageId}/main`, {})),
+  removeImage: (id: number, imageId: string) => data(api.delete<Item>(`/items/${id}/images/${imageId}`)),
+  repairs: (id: number) => data(api.get<Maintenance[]>(`/items/${id}/maintenance`)),
+  putInRepair: (id: number, form: MaintenanceForm) => data(api.post<Maintenance>(`/items/${id}/maintenance`, clean(form))),
+}
+
+export const maintenanceApi = {
+  open: () => data(api.get<Maintenance[]>('/maintenance')),
+  end: (id: number) => data(api.post<Maintenance>(`/maintenance/${id}/end`, {})),
 }
