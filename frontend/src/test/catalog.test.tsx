@@ -23,6 +23,7 @@ const loggedAs = (role: Role) =>
     user: { id: 1, email: 'x@floreevent.test', firstName: 'Claire', lastName: 'Martin', fullName: 'Claire Martin', phone: null, role, active: true, createdAt: '' },
     loading: false,
     login: vi.fn(),
+    register: vi.fn(),
     logout: vi.fn(),
     setUser: vi.fn(),
     hasRole: (...roles: Role[]) => roles.includes(role),
@@ -54,13 +55,13 @@ describe('Menu selon le role (US-02)', () => {
   it('montre tout au gerant', () => {
     loggedAs('GERANT')
     renderPage(<Layout />)
-    expect(menu()).toEqual(['Accueil', 'Catalogue', 'Matériel en réparation', 'Catégories', 'Équipe', 'Voir le site'])
+    expect(menu()).toEqual(['Accueil', 'Réservations', 'Catalogue', 'Matériel en réparation', 'Catégories', 'Équipe', 'Voir le site'])
   })
 
   it('cache la gestion du catalogue et de l equipe a la logistique', () => {
     loggedAs('LOGISTIQUE')
     renderPage(<Layout />)
-    expect(menu()).toEqual(['Accueil', 'Catalogue', 'Matériel en réparation', 'Voir le site'])
+    expect(menu()).toEqual(['Accueil', 'Réservations', 'Catalogue', 'Matériel en réparation', 'Voir le site'])
   })
 })
 

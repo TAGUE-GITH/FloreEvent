@@ -17,12 +17,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.jayway.jsonpath.JsonPath;
+import com.floreevent.quote.Geocoder;
 import com.floreevent.security.JwtService;
 import com.floreevent.user.Role;
 import com.floreevent.user.User;
@@ -45,6 +47,10 @@ public abstract class IntegrationTest {
 
 	@Autowired
 	protected UserRepository users;
+
+	/** Localisation des adresses simulee : les tests n'appellent jamais le vrai service de geocodage. */
+	@MockitoBean
+	protected Geocoder geocoder;
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;

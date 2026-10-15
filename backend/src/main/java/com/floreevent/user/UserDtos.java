@@ -16,15 +16,15 @@ public final class UserDtos {
 	private UserDtos() {
 	}
 
-	/** avatarUrl est absent quand il n'y a pas de photo. */
+	/** avatarUrl et customerId sont absents quand ils n'existent pas. */
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	public record UserResponse(Long id, String email, String firstName, String lastName, String fullName, String phone,
-			Role role, boolean active, Instant createdAt, String avatarUrl) {
+			Role role, boolean active, Instant createdAt, String avatarUrl, Long customerId) {
 
 		public static UserResponse of(User user) {
 			return new UserResponse(user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(),
 					user.getFullName(), user.getPhone(), user.getRole(), user.isActive(), user.getCreatedAt(),
-					Image.url(user.getAvatar()));
+					Image.url(user.getAvatar()), user.getCustomer() == null ? null : user.getCustomer().getId());
 		}
 	}
 

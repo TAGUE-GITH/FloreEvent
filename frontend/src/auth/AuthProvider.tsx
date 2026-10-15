@@ -3,12 +3,13 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from 'react'
 import { authApi, tokenStore } from '../api/client'
 import { STAFF_ROLES } from '../api/types'
-import type { Role, User } from '../api/types'
+import type { RegisterForm, Role, User } from '../api/types'
 
 type AuthContextValue = {
   user: User | null
   loading: boolean
   login: (email: string, password: string) => Promise<User>
+  register: (form: RegisterForm) => Promise<User>
   logout: () => void
   /** Met a jour l'utilisateur affiche (nom, photo) apres une modification du profil */
   setUser: (user: User) => void
@@ -57,12 +58,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [openSession],
   )
 
+  const register = useCallback(async (form: RegisterForm) => openSession(await authApi.register(form)), [openSession])
+
   const hasRole = useCallback((...roles: Role[]) => Boolean(user && roles.includes(user.role)), [user])
   const isStaff = Boolean(user && STAFF_ROLES.includes(user.role))
 
   const value = useMemo(
-    () => ({ user, loading, login, logout, setUser, hasRole, isStaff }),
-    [user, loading, login, logout, hasRole, isStaff],
+    () => ({ user, loading, login, register, logout, setUser, hasRole, isStaff }),
+    [user, loading, login, register, logout, hasRole, isStaff],
   )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

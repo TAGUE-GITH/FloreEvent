@@ -1,5 +1,20 @@
 import axios, { AxiosError } from 'axios'
-import type { Category, Item, ItemForm, Maintenance, MaintenanceForm, NewUser, User } from './types'
+import type {
+  Booking,
+  BookingRequest,
+  BookingSummary,
+  Category,
+  Estimate,
+  Item,
+  ItemForm,
+  Maintenance,
+  MaintenanceForm,
+  Named,
+  NewUser,
+  PublicItem,
+  RegisterForm,
+  User,
+} from './types'
 
 // En developpement VITE_API_URL est vide : Vite transmet /api au backend (voir vite.config.ts)
 export const API_URL: string = import.meta.env.VITE_API_URL ?? ''
@@ -61,6 +76,7 @@ export const healthApi = {
 export const authApi = {
   login: (email: string, password: string) => data(api.post<{ token: string; user: User }>('/auth/login', { email, password })),
   me: () => data(api.get<User>('/auth/me')),
+  register: (form: RegisterForm) => data(api.post<{ token: string; user: User }>('/auth/register', clean(form))),
 }
 
 /** Espace personnel : informations, mot de passe et photo de chaque utilisateur. */
@@ -103,4 +119,32 @@ export const itemsApi = {
 export const maintenanceApi = {
   open: () => data(api.get<Maintenance[]>('/maintenance')),
   end: (id: number) => data(api.post<Maintenance>(`/maintenance/${id}/end`, {})),
+}
+
+export type Period = { from?: string; to?: string }
+
+/** Catalogue public (sans connexion) : disponibilites quand les deux dates sont choisies. */
+export const catalogApi = {
+  items: (filters: { q?: string; categoryId?: number | '' } & Period = {}) =>
+    data(api.get<PublicItem[]>('/catalog/items', { params: clean(filters) })),
+  item: (id: number, period: Period = {}) => data(api.get<PublicItem>(`/catalog/items/${id}`, { params: clean(period) })),
+  categories: () => data(api.get<Named[]>('/catalog/categories')),
+}
+
+export const quoteApi = {
+  estimate: (request: BookingRequest) => data(api.post<Estimate>('/quote/estimate', clean(request))),
+}
+
+/** Demandes et reservations du client connecte. */
+export const myBookingsApi = {
+  request: (request: BookingRequest) => data(api.post<Booking>('/me/bookings', clean(request))),
+  list: () => data(api.get<BookingSummary[]>('/me/bookings')),
+  get: (id: number) => data(api.get<Booking>(`/me/bookings/${id}`)),
+  cancel: (id: number) => data(api.post<Booking>(`/me/bookings/${id}/cancel`, {})),
+}
+
+/** Reservations vues par l'equipe. */
+export const bookingsApi = {
+  list: () => data(api.get<BookingSummary[]>('/bookings')),
+  get: (id: number) => data(api.get<Booking>(`/bookings/${id}`)),
 }

@@ -9,3 +9,10 @@ export function formatEuros(cents: number): string {
 export function formatDate(value: string | Date): string {
   return new Date(value).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
 }
+
+// Periode de location : « le 14 nov. 2026 » ou « du 14 nov. au 16 nov. 2026 »
+export function formatPeriod(startDate: string, endDate: string): string {
+  const short = (value: string) => new Date(value).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+  const long = (value: string) => new Date(value).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+  return startDate === endDate ? `le ${long(startDate)}` : `du ${short(startDate)} au ${long(endDate)}`
+}

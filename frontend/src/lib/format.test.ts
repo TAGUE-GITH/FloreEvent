@@ -1,4 +1,4 @@
-import { formatDate, formatEuros } from './format'
+import { formatDate, formatEuros, formatPeriod } from './format'
 
 // Intl separe les milliers par une espace fine insecable : on la normalise pour comparer
 const plain = (text: string) => text.replace(/[  ]/g, ' ')
@@ -18,5 +18,12 @@ describe('formatEuros', () => {
 describe('formatDate', () => {
   it('affiche une date courte en francais', () => {
     expect(formatDate('2026-10-14T10:00:00')).toBe('14 oct. 2026')
+  })
+})
+
+describe('formatPeriod', () => {
+  it('affiche une periode de location', () => {
+    expect(formatPeriod('2026-11-14', '2026-11-14')).toBe('le 14 nov. 2026')
+    expect(formatPeriod('2026-11-14', '2026-11-16')).toBe('du 14 nov. au 16 nov. 2026')
   })
 })
