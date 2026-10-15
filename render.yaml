@@ -31,12 +31,12 @@ services:
       # Adresse qui recoit les messages du formulaire de contact
       - key: COMPANY_EMAIL
         sync: false
-      # Site de demonstration (portfolio) : donnees fictives et comptes publics. false pour la vraie entreprise.
+      # Vraie entreprise : pas de donnees fictives ni de comptes d'essai (true seulement pour une demonstration)
       - key: APP_DEMO
-        value: "true"
-      # Sans cle Stripe : page de paiement simulee (aucun argent echange)
+        value: "false"
+      # Pas de paiement simule : sans cle Stripe, l'acompte se regle hors ligne (virement, cheque, especes)
       - key: PAYMENT_SIMULATION
-        value: "true"
+        value: "false"
       - key: BREVO_API_KEY
         sync: false
       - key: MAIL_SENDER_EMAIL
