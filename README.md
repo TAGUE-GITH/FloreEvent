@@ -8,6 +8,10 @@ automatiquement, acompte par carte, planning des livraisons, état des lieux au 
 > logistique (planning, livraisons, retours, caution), prestations, emails, tableau de bord, site vitrine et démonstration.
 > Mise en ligne : voir [DEPLOIEMENT.md](DEPLOIEMENT.md).
 
+**Démonstration en ligne** (données fictives) : [flore-event.vercel.app](https://flore-event.vercel.app)
+— espace équipe : [/espace-equipe](https://flore-event.vercel.app/espace-equipe) (gérant, commercial, logistique),
+espace client : [/connexion](https://flore-event.vercel.app/connexion). Les comptes d'essai sont proposés sur chaque page de connexion.
+
 ## Le besoin
 
 Les demandes arrivent par téléphone et par email, les disponibilités se vérifient à la main et les devis se font sur tableur :
