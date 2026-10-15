@@ -1,31 +1,23 @@
 package com.floreevent.common;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-class HealthControllerTest {
+import com.floreevent.IntegrationTest;
 
-	@Autowired
-	private MockMvc mockMvc;
+class HealthControllerTest extends IntegrationTest {
 
 	@Test
 	void theHealthCheckIsPublicAndReachesTheDatabase() throws Exception {
-		mockMvc.perform(get("/api/health"))
+		getAs(null, "/api/health")
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value("ok"));
 	}
 
 	@Test
 	void everythingElseRequiresAuthentication() throws Exception {
-		mockMvc.perform(get("/api/products")).andExpect(status().isUnauthorized());
+		getAs(null, "/api/items").andExpect(status().isUnauthorized());
 	}
 }
