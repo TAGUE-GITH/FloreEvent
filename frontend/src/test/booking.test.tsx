@@ -1,18 +1,20 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
-import { bookingsApi, downloadFile, myBookingsApi } from '../api/client'
+import { bookingsApi, downloadFile, myBookingsApi, planningApi } from '../api/client'
 import type { Booking, Role } from '../api/types'
 import { useAuth } from '../auth/AuthProvider'
 import BookingDetailPage from '../features/bookings/BookingDetailPage'
+import PlanningPage from '../features/bookings/PlanningPage'
 import ClientBookingPage from '../features/client/ClientBookingPage'
 import { renderPage } from './render'
 
 vi.mock('../api/client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../api/client')>()),
-  bookingsApi: { list: vi.fn(), get: vi.fn(), sendQuote: vi.fn(), recordPayment: vi.fn(), cancellation: vi.fn(), cancel: vi.fn() },
+  bookingsApi: { list: vi.fn(), get: vi.fn(), sendQuote: vi.fn(), recordPayment: vi.fn(), cancellation: vi.fn(), cancel: vi.fn(), deliver: vi.fn(), recordReturn: vi.fn(), close: vi.fn() },
   myBookingsApi: { request: vi.fn(), list: vi.fn(), get: vi.fn(), checkout: vi.fn(), cancellation: vi.fn(), cancel: vi.fn() },
   downloadFile: vi.fn(),
+  planningApi: { list: vi.fn() },
 }))
 vi.mock('../auth/AuthProvider', () => ({ useAuth: vi.fn() }))
 
@@ -42,7 +44,7 @@ const booking = (changes: Partial<Booking> = {}): Booking => ({
   days: 3,
   deliveryMode: 'RETRAIT',
   installation: false,
-  lines: [{ itemId: 1, itemName: 'Barnum 3 x 6 m', quantity: 2, dayPriceCents: 15000, lineTotalCents: 60000 }],
+  lines: [{ itemId: 1, itemName: 'Barnum 3 x 6 m', quantity: 2, dayPriceCents: 15000, lineTotalCents: 60000, replacementValueCents: 120000 }],
   rentalCents: 60000,
   setupCents: 0,
   deliveryCents: 0,
@@ -57,6 +59,7 @@ const booking = (changes: Partial<Booking> = {}): Booking => ({
   balanceCents: 60000,
   payments: [],
   invoices: [],
+  damageCents: 0,
   createdAt: '2026-10-15T10:00:00Z',
   events: [{ status: 'DEMANDE', label: 'Demande envoyée', createdAt: '2026-10-15T10:00:00Z' }],
   ...changes,
@@ -162,5 +165,52 @@ describe('Espace client : devis, paiement, documents, annulation (US-10, US-11, 
 
     expect(myBookingsApi.cancel).toHaveBeenCalledWith(9)
     expect(await within(document.body).findByText('Annulée')).toBeInTheDocument()
+  })
+})
+
+describe('Logistique (US-14, US-16, US-17)', () => {
+  it('le planning montre les départs et retours de la semaine avec le matériel à charger', async () => {
+    loggedAs('LOGISTIQUE')
+    const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' })
+    vi.mocked(planningApi.list).mockResolvedValue([
+      {
+        date: today,
+        kind: 'LIVRAISON',
+        kindLabel: 'Livraison',
+        done: false,
+        bookingId: 9,
+        reference: 'RES-2026-00009',
+        status: 'CONFIRMEE',
+        customer: 'Léa Moreau',
+        phone: '06 12 34 56 78',
+        address: '5 Rue Grande 77300 Fontainebleau',
+        installation: true,
+        lines: booking().lines,
+      },
+    ])
+    renderPage(<PlanningPage />)
+
+    const day = await screen.findByRole('region', { name: new Date(`${today}T12:00:00Z`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }) })
+    expect(within(day).getByText('Livraison')).toBeInTheDocument()
+    expect(within(day).getByText('5 Rue Grande 77300 Fontainebleau · avec installation')).toBeInTheDocument()
+    expect(within(day).getByText('2 × Barnum 3 x 6 m')).toBeInTheDocument()
+    expect(screen.getAllByText('Rien de prévu.')).toHaveLength(6)
+    expect(planningApi.list).toHaveBeenCalledWith(expect.any(String), expect.any(String))
+  })
+
+  it('au retour, le matériel abîmé est compté et la casse estimée', async () => {
+    loggedAs('LOGISTIQUE')
+    vi.mocked(bookingsApi.get).mockResolvedValue({ ...confirmed(), status: 'EN_COURS', statusLabel: 'En cours', securityDepositMethod: 'CHEQUE' })
+    vi.mocked(bookingsApi.recordReturn).mockResolvedValue(confirmed())
+    renderPage(<BookingDetailPage />, { path: '/gestion/reservations/:id', route: '/gestion/reservations/9' })
+
+    const damaged = await screen.findByLabelText('Abîmés : Barnum 3 x 6 m')
+    await userEvent.clear(damaged)
+    await userEvent.type(damaged, '1')
+    expect(screen.getByLabelText('Rendus')).toHaveValue('1')
+    expect(plain(screen.getByText(/Casse à facturer/).textContent)).toBe('Casse à facturer : 1 200,00 € (retenue sur la caution : 720,00 €)')
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer le retour' }))
+
+    expect(bookingsApi.recordReturn).toHaveBeenCalledWith(9, [{ itemId: 1, returned: 1, damaged: 1, missing: 0 }], '')
   })
 })

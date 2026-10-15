@@ -16,8 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.floreevent.booking.BookingDtos.BookingResponse;
 import com.floreevent.booking.BookingDtos.BookingSummary;
 import com.floreevent.booking.BookingDtos.CancelRequest;
+import com.floreevent.booking.BookingDtos.DeliverRequest;
 import com.floreevent.booking.BookingDtos.OfflinePaymentRequest;
 import com.floreevent.booking.BookingDtos.QuoteRequest;
+import com.floreevent.booking.BookingDtos.ReturnRequest;
 import com.floreevent.user.Role;
 import com.floreevent.user.User;
 
@@ -37,8 +39,11 @@ public class BookingController {
 	private final PaymentService payments;
 	private final CancellationService cancellations;
 	private final BookingFiles files;
+	private final LogisticsService logistics;
 
-	public BookingController(BookingService bookings, PaymentService payments, CancellationService cancellations, BookingFiles files) {
+	public BookingController(BookingService bookings, PaymentService payments, CancellationService cancellations, BookingFiles files,
+			LogisticsService logistics) {
+		this.logistics = logistics;
 		this.bookings = bookings;
 		this.payments = payments;
 		this.cancellations = cancellations;
@@ -81,6 +86,23 @@ public class BookingController {
 		Booking booking = bookings.get(id);
 		payments.recordOffline(booking, request, bookings.account(user));
 		return BookingResponse.of(booking, true);
+	}
+
+	/** US-16 : materiel livre ou remis, caution recue. */
+	@PostMapping("/{id}/deliver")
+	public BookingResponse deliver(@PathVariable Long id, @Valid @RequestBody DeliverRequest request, @AuthenticationPrincipal User user) {
+		return BookingResponse.of(logistics.deliver(bookings.get(id), request.securityDepositMethod(), bookings.account(user)), true);
+	}
+
+	/** US-17 : etat des lieux au retour. */
+	@PostMapping("/{id}/return")
+	public BookingResponse recordReturn(@PathVariable Long id, @Valid @RequestBody ReturnRequest request, @AuthenticationPrincipal User user) {
+		return BookingResponse.of(logistics.recordReturn(bookings.get(id), request, bookings.account(user)), true);
+	}
+
+	@PostMapping("/{id}/close")
+	public BookingResponse close(@PathVariable Long id, @AuthenticationPrincipal User user) {
+		return BookingResponse.of(logistics.close(bookings.get(id), bookings.account(user)), true);
 	}
 
 	@GetMapping("/{id}/documents/{kind}")

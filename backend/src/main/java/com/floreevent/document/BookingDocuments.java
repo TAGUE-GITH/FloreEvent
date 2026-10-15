@@ -88,6 +88,36 @@ public class BookingDocuments {
 		});
 	}
 
+	/** US-15 : bon de livraison a faire signer par le client, avec la liste du materiel a controler. */
+	public byte[] deliveryNote(Booking b) {
+		return render(document -> {
+			header(document, "Bon de livraison", "Réservation " + b.getReference(), "Date : " + date(b.getStartDate()));
+			customerAndEvent(document, b);
+			var table = table(new float[] { 6, 1.2f, 2, 2 });
+			table.setSpacingBefore(14);
+			headCells(table, "Article", "Qté", "Livré", "Rendu");
+			for (BookingLine line : b.getLines()) {
+				cell(table, line.getItemName(), TEXT, Element.ALIGN_LEFT);
+				cell(table, String.valueOf(line.getQuantity()), TEXT, Element.ALIGN_RIGHT);
+				cell(table, " ", TEXT, Element.ALIGN_RIGHT);
+				cell(table, " ", TEXT, Element.ALIGN_RIGHT);
+			}
+			document.add(table);
+			paragraph(document, "Caution (non encaissée) : " + Money.euros(b.getSecurityDepositCents())
+					+ ". Le matériel abîmé ou manquant au retour est facturé à sa valeur de remplacement et retenu sur la caution.", TEXT, 10);
+			paragraph(document, "Reste à payer à la livraison : " + Money.euros(Math.max(0, b.getBalanceCents())) + ".", BOLD, 4);
+			var signatures = table(new float[] { 1, 1 });
+			signatures.setSpacingBefore(24);
+			for (String who : new String[] { "Pour FloreEvent", "Le client : « bon pour réception »" }) {
+				var cell = box(who);
+				cell.setFixedHeight(90);
+				cell.addElement(new Paragraph("Nom, date et signature", SMALL));
+				signatures.addCell(cell);
+			}
+			document.add(signatures);
+		});
+	}
+
 	/** Facture d'acompte, de solde, ou avoir ; montants TTC avec HT et TVA. */
 	public byte[] invoice(Invoice invoice) {
 		Booking b = invoice.getBooking();
@@ -208,6 +238,7 @@ public class BookingDocuments {
 		total(table, "Total HT", Money.euros(b.getTotalCents() - vat), TEXT);
 		total(table, "TVA 20 %", Money.euros(vat), TEXT);
 		total(table, "Total TTC", Money.euros(b.getTotalCents()), BOLD);
+		if (b.getDamageCents() > 0) total(table, "Casse et manquants (TTC)", Money.euros(b.getDamageCents()), BOLD);
 		document.add(table);
 		paragraph(document, "Caution demandée à la livraison ou au retrait (non encaissée) : " + Money.euros(b.getSecurityDepositCents()) + ".",
 				SMALL, 4);

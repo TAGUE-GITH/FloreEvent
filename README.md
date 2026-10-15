@@ -4,8 +4,8 @@ Application web de **location de matériel et de services événementiels** (ten
 décoration florale…) pour FloreEvent, à Melun (Seine-et-Marne) : catalogue en ligne, disponibilités par dates, devis calculés
 automatiquement, acompte par carte, planning des livraisons, état des lieux au retour.
 
-> **État du projet :** Sprint 3 terminé (devis envoyés par l'équipe, acompte par carte avec Stripe en mode test, paiements hors ligne,
-> devis, confirmations et factures en PDF, annulation selon la date).
+> **État du projet :** Sprint 4 terminé (planning des livraisons et retours, bon de livraison PDF, caution, état des lieux au retour,
+> casse facturée et retenue sur la caution). Sprint 3 : devis, acompte Stripe (test), factures PDF, annulation.
 > Prochain sprint : traitement des demandes, acompte par carte (Stripe, mode test), devis et factures PDF.
 
 ## Le besoin
@@ -39,7 +39,7 @@ facturée. FloreEvent **digitalise toute la chaîne**, de la demande du client a
 | 1 | Comptes et rôles, catalogue, stock et matériel en réparation | ✅ |
 | 2 | Disponibilités par dates, catalogue public, compte client, demande de devis | ✅ |
 | 3 | Réservations, acompte par carte (Stripe test), devis et factures PDF, annulation | ✅ |
-| 4 | Planning logistique, livraisons, retours et état des lieux, caution et casse | À venir |
+| 4 | Planning logistique, livraisons, retours et état des lieux, caution et casse | ✅ |
 | 5 | Services, emails, tableau de bord | À venir |
 | 6 | Site vitrine, mot de passe oublié, démonstration, mise en ligne | À venir |
 
@@ -68,8 +68,8 @@ remboursé automatiquement si le matériel a été réservé entre-temps (R2).
 ## Tests
 
 ```bash
-cd backend && ./mvnw test    # 62 tests : JUnit 5, MockMvc
-cd frontend && npm test      # 34 tests : Vitest, Testing Library
+cd backend && ./mvnw test    # 67 tests : JUnit 5, MockMvc
+cd frontend && npm test      # 36 tests : Vitest, Testing Library
 ```
 
 Les tests sont écrits avant le code (TDD) à partir des critères d'acceptation. GitHub Actions les exécute à chaque envoi, avec une

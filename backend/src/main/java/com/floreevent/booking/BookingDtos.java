@@ -73,7 +73,14 @@ public final class BookingDtos {
 	public record CustomerInfo(Long id, String fullName, String company, String phone, String email) {
 	}
 
-	public record LineResponse(Long itemId, String itemName, String imageUrl, int quantity, int dayPriceCents, int lineTotalCents) {
+	public record LineResponse(Long itemId, String itemName, String imageUrl, int quantity, int dayPriceCents, int lineTotalCents,
+			int replacementValueCents, Integer returnedQuantity, Integer damagedQuantity, Integer missingQuantity) {
+
+		public static LineResponse of(BookingLine l) {
+			return new LineResponse(l.getItem().getId(), l.getItemName(), Image.url(l.getItem().getMainImage()), l.getQuantity(),
+					l.getDayPriceCents(), l.getLineTotalCents(), l.getReplacementValueCents(), l.getReturnedQuantity(), l.getDamagedQuantity(),
+					l.getMissingQuantity());
+		}
 	}
 
 	public record EventResponse(BookingStatus status, String label, String note, String author, Instant createdAt) {
@@ -102,7 +109,8 @@ public final class BookingDtos {
 			boolean installation, String note, List<LineResponse> lines, int rentalCents, int setupCents, int deliveryCents,
 			int discountCents, int totalCents, int vatCents, int depositCents, int securityDepositCents, String quoteMessage,
 			LocalDate quoteValidUntil, boolean quoteExpired, Integer cancellationFeeCents, int amountDueCents, int paidCents,
-			int balanceCents, List<PaymentResponse> payments, List<InvoiceResponse> invoices, Instant createdAt,
+			int balanceCents, List<PaymentResponse> payments, List<InvoiceResponse> invoices, Instant deliveredAt, Instant returnedAt,
+			PaymentMethod securityDepositMethod, Integer securityDepositReturnedCents, int damageCents, Instant createdAt,
 			List<EventResponse> events) {
 
 		/** Les noms des employes ne sont montres qu'a l'equipe. */
@@ -111,13 +119,13 @@ public final class BookingDtos {
 			return new BookingResponse(b.getId(), b.getReference(), b.getStatus(), b.getStatus().label(),
 					new CustomerInfo(c.getId(), c.getFullName(), c.getCompany(), c.getPhone(), c.getEmail()), b.getStartDate(),
 					b.getEndDate(), b.getDays(), b.getDeliveryMode(), b.getAddress(), b.getDistanceKm(), b.isInstallation(), b.getNote(),
-					b.getLines().stream().map(l -> new LineResponse(l.getItem().getId(), l.getItemName(), Image.url(l.getItem().getMainImage()),
-							l.getQuantity(), l.getDayPriceCents(), l.getLineTotalCents())).toList(),
+					b.getLines().stream().map(LineResponse::of).toList(),
 					b.getRentalCents(), b.getSetupCents(), b.getDeliveryCents(), b.getDiscountCents(), b.getTotalCents(),
 					com.floreevent.quote.Pricing.vatIncluded(b.getTotalCents()), b.getDepositCents(), b.getSecurityDepositCents(),
 					b.getQuoteMessage(), b.getQuoteValidUntil(), b.isQuoteExpired(), b.getCancellationFeeCents(), b.getAmountDueCents(),
 					b.getPaidCents(), b.getBalanceCents(), b.getPayments().stream().map(p -> PaymentResponse.of(p, forTeam)).toList(),
-					b.getInvoices().stream().map(InvoiceResponse::of).toList(), b.getCreatedAt(),
+					b.getInvoices().stream().map(InvoiceResponse::of).toList(), b.getDeliveredAt(), b.getReturnedAt(),
+					b.getSecurityDepositMethod(), b.getSecurityDepositReturnedCents(), b.getDamageCents(), b.getCreatedAt(),
 					b.getEvents().stream().map(e -> new EventResponse(e.getStatus(), e.getStatus().label(), e.getNote(),
 							forTeam && e.getAuthor() != null ? e.getAuthor().getFullName() : null, e.getCreatedAt())).toList());
 		}
@@ -138,6 +146,28 @@ public final class BookingDtos {
 			@NotNull(message = "Choisissez le moyen de paiement.") PaymentMethod method,
 			@NotNull(message = "Indiquez le montant.") @Positive(message = "Le montant doit être positif.") Integer amountCents,
 			@Size(max = 255, message = "255 caractères maximum.") String note) {
+	}
+
+	/** US-16 : livraison, caution recue. */
+	public record DeliverRequest(@NotNull(message = "Choisissez comment la caution est remise.") PaymentMethod securityDepositMethod) {
+	}
+
+	/** US-17 : etat des lieux d'un article au retour. */
+	public record ReturnLine(
+			@NotNull Long itemId,
+			@NotNull @PositiveOrZero Integer returned,
+			@NotNull @PositiveOrZero Integer damaged,
+			@NotNull @PositiveOrZero Integer missing) {
+	}
+
+	public record ReturnRequest(
+			@NotEmpty(message = "Indiquez l'état de chaque article.") List<@Valid ReturnLine> lines,
+			@Size(max = 255, message = "255 caractères maximum.") String note) {
+	}
+
+	/** US-14 : tache du planning (depart ou retour du materiel). */
+	public record PlanningTask(LocalDate date, String kind, String kindLabel, boolean done, Long bookingId, String reference,
+			BookingStatus status, String customer, String phone, String address, boolean installation, List<LineResponse> lines) {
 	}
 
 	/** Adresse de la page de paiement de l'acompte. */

@@ -27,6 +27,13 @@ export function BookingDetails({ booking: b, aside, filesPath }: { booking: Book
                   <p className="text-sm text-slate-500 tabular-nums">
                     {line.quantity} × {formatEuros(line.dayPriceCents)} / jour
                   </p>
+                  {line.returnedQuantity != null && (
+                    <p className="text-sm text-slate-600">
+                      Retour : {line.returnedQuantity} rendu(s)
+                      {line.damagedQuantity ? ` · ${line.damagedQuantity} abîmé(s)` : ''}
+                      {line.missingQuantity ? ` · ${line.missingQuantity} manquant(s)` : ''}
+                    </p>
+                  )}
                 </div>
                 <p className="font-bold tabular-nums">{formatEuros(line.lineTotalCents)}</p>
               </li>
@@ -80,7 +87,9 @@ export function BookingDetails({ booking: b, aside, filesPath }: { booking: Book
         </div>
         <p className="text-right text-xs text-slate-500">dont TVA 20 % : {formatEuros(b.vatCents)}</p>
         <Row label="Acompte (30 %)" value={formatEuros(b.depositCents)} />
+        {b.damageCents > 0 && <Row label="Casse et manquants" value={formatEuros(b.damageCents)} />}
         <Row label="Caution" value={formatEuros(b.securityDepositCents)} />
+        {b.securityDepositReturnedCents !== undefined && <Row label="Caution rendue" value={formatEuros(b.securityDepositReturnedCents)} />}
         <Payments booking={b} />
         <Documents booking={b} filesPath={filesPath} />
         {aside}
@@ -131,8 +140,10 @@ function Documents({ booking: b, filesPath }: { booking: Booking; filesPath: str
   const [error, setError] = useState('')
   const files: { label: string; path: string; name: string }[] = []
   if (b.quoteValidUntil) files.push({ label: 'Devis', path: `${filesPath}/documents/devis`, name: `Devis-${b.reference}.pdf` })
-  if (CONFIRMED.includes(b.status))
+  if (CONFIRMED.includes(b.status)) {
     files.push({ label: 'Confirmation de réservation', path: `${filesPath}/documents/confirmation`, name: `Confirmation-${b.reference}.pdf` })
+    files.push({ label: 'Bon de livraison', path: `${filesPath}/documents/bon-de-livraison`, name: `Bon-de-livraison-${b.reference}.pdf` })
+  }
   for (const invoice of b.invoices)
     files.push({ label: `${invoice.kindLabel} ${invoice.number}`, path: `${filesPath}/invoices/${invoice.id}`, name: `${invoice.number}.pdf` })
   if (files.length === 0) return null

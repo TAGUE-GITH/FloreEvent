@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { bookingsApi, errorMessage, fieldErrors } from '../../api/client'
-import type { Booking, PaymentMethod } from '../../api/types'
+import type { Booking, PaymentMethod, ReturnCount } from '../../api/types'
 import { useAuth } from '../../auth/AuthProvider'
 import { Alert, Button, Card, Field, Select, TextArea } from '../../components/ui'
 import { formatDate, formatEuros } from '../../lib/format'
@@ -26,7 +26,10 @@ export function BookingActions({ booking: b }: { booking: Booking }) {
   const cancellable = quoting || b.status === 'CONFIRMEE'
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 empty:hidden">
+      {b.status === 'CONFIRMEE' && <DeliverForm booking={b} />}
+      {b.status === 'EN_COURS' && <ReturnForm booking={b} />}
+      {b.status === 'RETOURNEE' && <CloseForm booking={b} />}
       {sales && quoting && <QuoteForm booking={b} />}
       {payable && <PaymentForm booking={b} />}
       {sales && cancellable && <CancelForm booking={b} />}
@@ -197,6 +200,121 @@ function CancelForm({ booking: b }: { booking: Booking }) {
           </Button>
         </div>
       </form>
+    </Card>
+  )
+}
+
+/** US-16 : le materiel part (livraison ou retrait), la caution est remise. */
+function DeliverForm({ booking: b }: { booking: Booking }) {
+  const saved = useSaved(b.id)
+  const [method, setMethod] = useState<PaymentMethod>('CHEQUE')
+  const deliver = useMutation({ mutationFn: () => bookingsApi.deliver(b.id, method), onSuccess: saved })
+  const delivery = b.deliveryMode === 'LIVRAISON'
+  return (
+    <Card>
+      <h2 className="font-bold">{delivery ? 'Livraison' : 'Retrait par le client'}</h2>
+      <p className="mt-1 text-sm text-slate-600">
+        Faites signer le bon de livraison et récupérez la caution de {formatEuros(b.securityDepositCents)} (elle n’est pas encaissée).
+      </p>
+      <form
+        className="mt-4 space-y-4"
+        onSubmit={(event) => {
+          event.preventDefault()
+          deliver.mutate()
+        }}
+      >
+        <Select label="Caution remise par" value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)}>
+          {METHODS.map((m) => (
+            <option key={m.value} value={m.value}>
+              {m.label}
+            </option>
+          ))}
+        </Select>
+        <Alert>{deliver.isError ? errorMessage(deliver.error) : ''}</Alert>
+        <Button type="submit" loading={deliver.isPending}>
+          {delivery ? 'Matériel livré' : 'Matériel remis au client'}
+        </Button>
+      </form>
+    </Card>
+  )
+}
+
+/** US-17 : etat des lieux au retour, article par article. */
+function ReturnForm({ booking: b }: { booking: Booking }) {
+  const saved = useSaved(b.id)
+  const [counts, setCounts] = useState<ReturnCount[]>(() => b.lines.map((l) => ({ itemId: l.itemId, returned: l.quantity, damaged: 0, missing: 0 })))
+  const [note, setNote] = useState('')
+  const send = useMutation({ mutationFn: () => bookingsApi.recordReturn(b.id, counts, note), onSuccess: saved })
+  const damage = b.lines.reduce((sum, line, i) => sum + (counts[i].damaged + counts[i].missing) * line.replacementValueCents, 0)
+
+  /** Abime ou manquant : le nombre rendu en bon etat s'ajuste tout seul. */
+  const change = (index: number, field: 'damaged' | 'missing', value: string) => {
+    const quantity = b.lines[index].quantity
+    setCounts((all) =>
+      all.map((count, i) => {
+        if (i !== index) return count
+        const next = { ...count, [field]: Math.max(0, Math.min(quantity, Number(value) || 0)) }
+        next.returned = Math.max(0, quantity - next.damaged - next.missing)
+        return next
+      }),
+    )
+  }
+
+  return (
+    <Card>
+      <h2 className="font-bold">Retour du matériel</h2>
+      <p className="mt-1 text-sm text-slate-600">Comptez chaque article : le matériel abîmé part en réparation, la casse est retenue sur la caution.</p>
+      <form
+        className="mt-4 space-y-4"
+        onSubmit={(event) => {
+          event.preventDefault()
+          send.mutate()
+        }}
+      >
+        {b.lines.map((line, i) => (
+          <fieldset key={line.itemId} className="rounded-xl border border-stone-200 p-3">
+            <legend className="px-1 text-sm font-semibold">
+              {line.itemName} · {line.quantity} loué(s)
+            </legend>
+            <div className="grid grid-cols-3 gap-3">
+              <Field label="Rendus" value={counts[i].returned} readOnly />
+              <Field label="Abîmés" aria-label={`Abîmés : ${line.itemName}`} type="number" min={0} max={line.quantity} value={counts[i].damaged} onChange={(e) => change(i, 'damaged', e.target.value)} />
+              <Field label="Manquants" aria-label={`Manquants : ${line.itemName}`} type="number" min={0} max={line.quantity} value={counts[i].missing} onChange={(e) => change(i, 'missing', e.target.value)} />
+            </div>
+          </fieldset>
+        ))}
+        <Field label="Remarque (facultatif)" maxLength={255} value={note} onChange={(e) => setNote(e.target.value)} />
+        <p className="text-sm">
+          Casse à facturer : <strong>{formatEuros(damage)}</strong>
+          {damage > 0 && ` (retenue sur la caution : ${formatEuros(Math.min(damage, b.securityDepositCents))})`}
+        </p>
+        <Alert>{send.isError ? errorMessage(send.error) : ''}</Alert>
+        <Button type="submit" loading={send.isPending}>
+          Enregistrer le retour
+        </Button>
+      </form>
+    </Card>
+  )
+}
+
+/** Tout est paye : la caution (moins la casse) est rendue et le dossier est clos. */
+function CloseForm({ booking: b }: { booking: Booking }) {
+  const saved = useSaved(b.id)
+  const close = useMutation({ mutationFn: () => bookingsApi.close(b.id), onSuccess: saved })
+  return (
+    <Card>
+      <h2 className="font-bold">Clôturer le dossier</h2>
+      <p className="mt-1 text-sm text-slate-600">
+        {b.balanceCents > 0
+          ? `Encaissez d’abord le reste à payer (${formatEuros(b.balanceCents)}).`
+          : `Rendez la caution au client : ${formatEuros(b.securityDepositReturnedCents ?? 0)}.`}
+      </p>
+      <div className="mt-4 space-y-3">
+        <Alert>{close.isError ? errorMessage(close.error) : ''}</Alert>
+        <Button disabled={b.balanceCents > 0} loading={close.isPending} onClick={() => close.mutate()}>
+          Caution rendue, clôturer
+        </Button>
+      </div>
     </Card>
   )
 }

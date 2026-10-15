@@ -7,6 +7,7 @@ import Layout from './components/Layout'
 import StaffLoginPage from './features/auth/StaffLoginPage'
 import BookingDetailPage from './features/bookings/BookingDetailPage'
 import BookingsPage from './features/bookings/BookingsPage'
+import PlanningPage from './features/bookings/PlanningPage'
 import CategoriesPage from './features/catalog/CategoriesPage'
 import ItemDetailPage from './features/catalog/ItemDetailPage'
 import ItemFormPage from './features/catalog/ItemFormPage'
@@ -67,6 +68,7 @@ export default function App() {
         <Route index element={<StaffHomePage />} />
         <Route path="reservations" element={<BookingsPage />} />
         <Route path="reservations/:id" element={<BookingDetailPage />} />
+        <Route path="planning" element={<PlanningPage />} />
         <Route path="catalogue" element={<ItemsPage />} />
         <Route path="catalogue/nouveau" element={only(['GERANT'], <ItemFormPage />)} />
         <Route path="catalogue/:id" element={<ItemDetailPage />} />
