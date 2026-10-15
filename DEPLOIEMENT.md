@@ -53,7 +53,20 @@ Au premier démarrage, la démonstration est chargée : 14 articles avec photos,
 
 Sans clé, les emails sont seulement écrits dans le journal du serveur. Les adresses de démonstration ne reçoivent jamais d'email.
 
-## 5. Paiement — Stripe en mode test (facultatif)
+## 5. Compte du propriétaire (gérant privé)
+
+Les comptes de démonstration sont publics. Pour avoir son propre compte gérant :
+
+1. Sur Render, **Environment** : ajouter `BOOTSTRAP_EMAIL` (son email) et `BOOTSTRAP_PASSWORD` (un mot de passe provisoire),
+   puis **Save Changes** (le service redémarre).
+2. Au démarrage, ce compte gérant est créé s'il n'existe pas encore. Un compte existant n'est jamais modifié.
+3. Se connecter sur `/espace-equipe` avec ce compte, puis changer le mot de passe dans **Mon profil**.
+4. Supprimer ensuite `BOOTSTRAP_PASSWORD` sur Render : il ne sert plus.
+
+C'est le gérant qui crée les comptes de l'équipe et leur donne leurs droits (commercial, logistique, gérant) dans le menu
+**Équipe**. Ajouter aussi `COMPANY_EMAIL` (son email) pour recevoir les messages du formulaire de contact.
+
+## 6. Paiement — Stripe en mode test (facultatif)
 
 Sans clé Stripe, le site utilise une page de paiement **simulée**. Pour la vraie page Stripe (mode test, carte `4242 4242 4242 4242`) :
 
