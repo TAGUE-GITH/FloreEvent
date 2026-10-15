@@ -10,9 +10,10 @@ Navigateur ──► Vercel (site React) ──► Render (API Spring Boot, Dock
                                                  └──► Stripe (acompte par carte, mode test, webhook signé)
 ```
 
-Cette mise en ligne est une **démonstration** (`APP_DEMO=true`) : matériel, clients, réservations et chiffres sont fictifs.
-L'espace équipe (`/espace-equipe`) propose un compte par rôle (gérant, commercial, logistique), la connexion client
-(`/connexion`) propose le compte client. Les vraies données de FloreEvent iront dans une installation séparée (`APP_DEMO=false`).
+Cette mise en ligne sert la **vraie entreprise** (`APP_DEMO=false`) : aucune donnée fictive, aucun compte d'essai. Le gérant
+se connecte sur `/espace-equipe` avec son propre compte (étape 5), crée les comptes de son équipe et leur donne leurs droits.
+Pour une démonstration publique (portfolio), utiliser une installation séparée avec `APP_DEMO=true` : données fictives et
+comptes d'essai proposés sur la connexion client.
 
 ## 1. Base de données — Neon
 
@@ -35,8 +36,8 @@ Les tables sont créées automatiquement par Flyway au premier démarrage.
    `MAIL_SENDER_EMAIL` (étape 4). Laisser `STRIPE_SECRET_KEY` et `STRIPE_WEBHOOK_SECRET` vides pour commencer.
 3. **Apply** (5 à 10 minutes la première fois). Vérification : `https://floreevent-api.onrender.com/api/health` → `{"status":"ok"}`.
 
-Au premier démarrage, la démonstration est chargée : 14 articles avec photos, 4 prestations, 12 réservations à toutes les
-étapes, et 4 comptes (mot de passe `demo-floreevent-2026`).
+Au premier démarrage, les tables sont créées vides ; avec `BOOTSTRAP_EMAIL` et `BOOTSTRAP_PASSWORD`, le compte du gérant
+est créé (étape 5).
 
 > Offre gratuite : le service s'endort après 15 minutes sans visite et met environ une minute à se réveiller.
 

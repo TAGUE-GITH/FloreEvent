@@ -4,7 +4,6 @@ import type { FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { errorMessage, fieldErrors } from '../../api/client'
 import { homeOf, useAuth } from '../../auth/AuthProvider'
-import { DemoAccounts } from '../../components/DemoAccounts'
 import { Alert, Button, Field } from '../../components/ui'
 
 // US-01 : connexion de l'equipe de FloreEvent (gerant, commerciaux, logistique)
@@ -67,14 +66,7 @@ export default function StaffLoginPage() {
             Mot de passe oublié ?
           </Link>
         </p>
-        <DemoAccounts
-          roles={['GERANT', 'COMMERCIAL', 'LOGISTIQUE']}
-          onPick={(pickedEmail, pickedPassword) => {
-            setEmail(pickedEmail)
-            setPassword(pickedPassword)
-          }}
-        />
-        <p className="mt-6 text-center text-xs text-slate-500">Votre compte est créé par le gérant.</p>
+        <p className="mt-6 text-center text-xs text-slate-500">Chaque membre de l’équipe a son propre compte, créé par le gérant qui lui donne ses droits.</p>
         <p className="mt-4 text-center text-sm">
           <Link to="/" className="font-semibold text-slate-600 hover:text-brand-700">
             ← Retour au site
