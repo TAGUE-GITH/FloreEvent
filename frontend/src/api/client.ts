@@ -2,6 +2,7 @@ import axios, { AxiosError } from 'axios'
 import type {
   Booking,
   BookingRequest,
+  CancellationPreview,
   BookingSummary,
   Category,
   Estimate,
@@ -11,8 +12,10 @@ import type {
   MaintenanceForm,
   Named,
   NewUser,
+  PaymentMethod,
   PublicItem,
   RegisterForm,
+  SimulatedSession,
   User,
 } from './types'
 
@@ -140,11 +143,40 @@ export const myBookingsApi = {
   request: (request: BookingRequest) => data(api.post<Booking>('/me/bookings', clean(request))),
   list: () => data(api.get<BookingSummary[]>('/me/bookings')),
   get: (id: number) => data(api.get<Booking>(`/me/bookings/${id}`)),
+  /** Le client accepte le devis : adresse de la page de paiement de l'acompte. */
+  checkout: (id: number) => data(api.post<{ url: string }>(`/me/bookings/${id}/checkout`, {})),
+  cancellation: (id: number) => data(api.get<CancellationPreview>(`/me/bookings/${id}/cancellation`)),
   cancel: (id: number) => data(api.post<Booking>(`/me/bookings/${id}/cancel`, {})),
 }
 
-/** Reservations vues par l'equipe. */
+export type QuoteForm = { discountCents: number; message: string }
+export type OfflinePayment = { method: PaymentMethod; amountCents: number; note: string }
+
+/** Reservations traitees par l'equipe : devis, paiements hors ligne, annulation. */
 export const bookingsApi = {
   list: () => data(api.get<BookingSummary[]>('/bookings')),
   get: (id: number) => data(api.get<Booking>(`/bookings/${id}`)),
+  sendQuote: (id: number, form: QuoteForm) => data(api.post<Booking>(`/bookings/${id}/quote`, clean(form))),
+  recordPayment: (id: number, payment: OfflinePayment) => data(api.post<Booking>(`/bookings/${id}/payments`, clean(payment))),
+  cancellation: (id: number) => data(api.get<CancellationPreview>(`/bookings/${id}/cancellation`)),
+  cancel: (id: number, reason: string) => data(api.post<Booking>(`/bookings/${id}/cancel`, { reason })),
+}
+
+/** Paiement de demonstration (sans compte Stripe) : meme chemin que la confirmation de Stripe. */
+export const simulatedPaymentsApi = {
+  get: (session: string) => data(api.get<SimulatedSession>(`/simulated-payments/${session}`)),
+  pay: (session: string) => data(api.post<SimulatedSession>(`/simulated-payments/${session}/pay`, {})),
+}
+
+/** Telecharge un document PDF protege par le jeton (devis, confirmation, facture). */
+export async function downloadFile(path: string, filename: string) {
+  const blob = await data(api.get<Blob>(path, { responseType: 'blob' }))
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 10_000)
 }

@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.transaction.annotation.Transactional;
 
 import com.jayway.jsonpath.JsonPath;
+import com.floreevent.payment.PaymentGateway;
 import com.floreevent.quote.Geocoder;
 import com.floreevent.security.JwtService;
 import com.floreevent.user.Role;
@@ -35,12 +36,14 @@ import com.floreevent.user.UserRepository;
  * Chaque test tourne dans une transaction annulee a la fin : la base reste propre.
  */
 // Pas de compte gerant cree au demarrage pendant les tests : chaque test cree ses propres comptes
-@SpringBootTest(properties = "app.bootstrap.email=")
+@SpringBootTest(properties = { "app.bootstrap.email=", "app.stripe.webhook-secret=" + IntegrationTest.WEBHOOK_SECRET })
 @AutoConfigureMockMvc
 @Transactional
 public abstract class IntegrationTest {
 
 	protected static final String PASSWORD = "motdepasse-solide-2026";
+	/** Secret du webhook Stripe des tests : les tests signent les messages comme Stripe. */
+	protected static final String WEBHOOK_SECRET = "whsec_test_floreevent";
 
 	@Autowired
 	protected MockMvc mockMvc;
@@ -51,6 +54,10 @@ public abstract class IntegrationTest {
 	/** Localisation des adresses simulee : les tests n'appellent jamais le vrai service de geocodage. */
 	@MockitoBean
 	protected Geocoder geocoder;
+
+	/** Paiement par carte simule : les tests n'appellent jamais Stripe. */
+	@MockitoBean
+	protected PaymentGateway gateway;
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;

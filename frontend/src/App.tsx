@@ -14,6 +14,7 @@ import ItemsPage from './features/catalog/ItemsPage'
 import MaintenancePage from './features/catalog/MaintenancePage'
 import ClientBookingPage from './features/client/ClientBookingPage'
 import ClientSpacePage from './features/client/ClientSpacePage'
+import SimulatedPaymentPage from './features/client/SimulatedPaymentPage'
 import StaffHomePage from './features/home/StaffHomePage'
 import PrivacyPage from './features/legal/PrivacyPage'
 import TermsPage from './features/legal/TermsPage'
@@ -57,6 +58,7 @@ export default function App() {
         <Route path="confidentialite" element={<PrivacyPage />} />
         <Route path="mon-espace" element={only(['CLIENT'], <ClientSpacePage />)} />
         <Route path="mon-espace/reservations/:id" element={only(['CLIENT'], <ClientBookingPage />)} />
+        <Route path="paiement-simule" element={only(['CLIENT'], <SimulatedPaymentPage />)} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 

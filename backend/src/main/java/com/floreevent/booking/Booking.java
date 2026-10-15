@@ -87,6 +87,21 @@ public class Booking {
 	@Column(name = "terms_version")
 	private String termsVersion;
 
+	/** US-09 : remise accordee par l'equipe (deja deduite du total). */
+	@Column(name = "discount_cents", nullable = false)
+	private int discountCents;
+
+	@Column(name = "quote_message")
+	private String quoteMessage;
+
+	/** Le client accepte le devis et paie l'acompte jusqu'a cette date incluse. */
+	@Column(name = "quote_valid_until")
+	private LocalDate quoteValidUntil;
+
+	/** US-13 : somme gardee quand une reservation confirmee est annulee. */
+	@Column(name = "cancellation_fee_cents")
+	private Integer cancellationFeeCents;
+
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt = Instant.now();
 
@@ -100,6 +115,14 @@ public class Booking {
 	@OneToMany(mappedBy = "booking", cascade = CascadeType.ALL)
 	@OrderBy("id")
 	private List<BookingEvent> events = new ArrayList<>();
+
+	@OneToMany(mappedBy = "booking", cascade = CascadeType.ALL)
+	@OrderBy("id")
+	private List<Payment> payments = new ArrayList<>();
+
+	@OneToMany(mappedBy = "booking", cascade = CascadeType.ALL)
+	@OrderBy("id")
+	private List<Invoice> invoices = new ArrayList<>();
 
 	protected Booking() {
 	}
@@ -135,6 +158,73 @@ public class Booking {
 		if (status != BookingStatus.DEMANDE && status != BookingStatus.DEVIS)
 			throw ApiException.badRequest("Cette réservation est confirmée : contactez-nous pour l'annuler.");
 		moveTo(BookingStatus.ANNULEE, "Annulée par le client", author);
+	}
+
+	/**
+	 * US-09 : l'equipe envoie le devis, ou le modifie tant qu'il n'est pas accepte. La remise est deduite du total ;
+	 * l'acompte est recalcule sur le nouveau total.
+	 */
+	void sendQuote(int discountCents, String message, LocalDate validUntil, int depositCents, User author) {
+		if (status != BookingStatus.DEMANDE && status != BookingStatus.DEVIS)
+			throw ApiException.badRequest("Ce devis ne peut plus être modifié.");
+		boolean first = status == BookingStatus.DEMANDE;
+		this.discountCents = discountCents;
+		this.totalCents = grossCents() - discountCents;
+		this.depositCents = depositCents;
+		this.quoteMessage = message;
+		this.quoteValidUntil = validUntil;
+		moveTo(BookingStatus.DEVIS, first ? "Devis envoyé au client" : "Devis modifié", author);
+	}
+
+	/** Total avant remise : location, installation et livraison. */
+	int grossCents() {
+		return rentalCents + setupCents + deliveryCents;
+	}
+
+	/** L'equipe ne donne pas suite a une demande (ou retire un devis). */
+	void refuse(String reason, User author) {
+		if (status != BookingStatus.DEMANDE && status != BookingStatus.DEVIS)
+			throw ApiException.badRequest("Cette réservation est confirmée : utilisez l'annulation.");
+		moveTo(BookingStatus.ANNULEE, "Annulée par FloreEvent : " + reason, author);
+	}
+
+	/** Acompte recu : le materiel est bloque (R1). La disponibilite a ete reverifiee sous verrou (R2). */
+	void confirm(String note, User author) {
+		if (status != BookingStatus.DEVIS) throw ApiException.badRequest("Seul un devis envoyé peut être confirmé.");
+		moveTo(BookingStatus.CONFIRMEE, note, author);
+	}
+
+	/** US-13 : annulation d'une reservation confirmee ; fee = somme gardee selon la date. */
+	void cancelConfirmed(int fee, String note, User author) {
+		if (status != BookingStatus.CONFIRMEE)
+			throw ApiException.badRequest("Le matériel est déjà livré : cette réservation ne peut plus être annulée.");
+		cancellationFeeCents = fee;
+		moveTo(BookingStatus.ANNULEE, note, author);
+	}
+
+	/** Evenement de l'historique sans changement d'etat (paiement rembourse, paiement recu...). */
+	void addNote(String note, User author) {
+		updatedAt = Instant.now();
+		events.add(new BookingEvent(this, status, note, author));
+	}
+
+	boolean isQuoteExpired() {
+		return status == BookingStatus.DEVIS && quoteValidUntil != null && quoteValidUntil.isBefore(Dates.today());
+	}
+
+	/** Somme due : le total, ou apres annulation la part gardee. */
+	public int getAmountDueCents() {
+		if (status == BookingStatus.ANNULEE) return cancellationFeeCents == null ? 0 : cancellationFeeCents;
+		return totalCents;
+	}
+
+	/** Paiements encaisses, remboursements deduits. */
+	public int getPaidCents() {
+		return payments.stream().mapToInt(Payment::getNetCents).sum();
+	}
+
+	public int getBalanceCents() {
+		return getAmountDueCents() - getPaidCents();
 	}
 
 	private void moveTo(BookingStatus target, String note, User author) {
@@ -217,6 +307,30 @@ public class Booking {
 
 	public String getTermsVersion() {
 		return termsVersion;
+	}
+
+	public int getDiscountCents() {
+		return discountCents;
+	}
+
+	public String getQuoteMessage() {
+		return quoteMessage;
+	}
+
+	public LocalDate getQuoteValidUntil() {
+		return quoteValidUntil;
+	}
+
+	public Integer getCancellationFeeCents() {
+		return cancellationFeeCents;
+	}
+
+	public List<Payment> getPayments() {
+		return payments;
+	}
+
+	public List<Invoice> getInvoices() {
+		return invoices;
 	}
 
 	public Instant getCreatedAt() {

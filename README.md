@@ -4,7 +4,8 @@ Application web de **location de matériel et de services événementiels** (ten
 décoration florale…) pour FloreEvent, à Melun (Seine-et-Marne) : catalogue en ligne, disponibilités par dates, devis calculés
 automatiquement, acompte par carte, planning des livraisons, état des lieux au retour.
 
-> **État du projet :** Sprint 2 terminé (disponibilités par dates, catalogue public, devis calculé en ligne, comptes clients).
+> **État du projet :** Sprint 3 terminé (devis envoyés par l'équipe, acompte par carte avec Stripe en mode test, paiements hors ligne,
+> devis, confirmations et factures en PDF, annulation selon la date).
 > Prochain sprint : traitement des demandes, acompte par carte (Stripe, mode test), devis et factures PDF.
 
 ## Le besoin
@@ -37,7 +38,7 @@ facturée. FloreEvent **digitalise toute la chaîne**, de la demande du client a
 | 0 | Analyse des besoins, conception, environnement, intégration continue | ✅ |
 | 1 | Comptes et rôles, catalogue, stock et matériel en réparation | ✅ |
 | 2 | Disponibilités par dates, catalogue public, compte client, demande de devis | ✅ |
-| 3 | Réservations, acompte par carte (Stripe test), devis et factures PDF, annulation | À venir |
+| 3 | Réservations, acompte par carte (Stripe test), devis et factures PDF, annulation | ✅ |
 | 4 | Planning logistique, livraisons, retours et état des lieux, caution et casse | À venir |
 | 5 | Services, emails, tableau de bord | À venir |
 | 6 | Site vitrine, mot de passe oublié, démonstration, mise en ligne | À venir |
@@ -51,11 +52,24 @@ cd frontend && npm install && npm run dev # site sur http://localhost:5173
 
 Avec Docker (API + PostgreSQL) : `docker compose up --build`.
 
+### Paiement de l'acompte (Stripe, mode test)
+
+Sans clé Stripe, le site local utilise une **page de paiement simulée** (aucune carte, aucun argent échangé). Pour le vrai
+paiement en mode test, les clés sont saisies **chez l'hébergeur**, jamais dans le code :
+
+| Variable | Valeur |
+|---|---|
+| `STRIPE_SECRET_KEY` | clé secrète de test (`sk_test_…`), tableau de bord Stripe → Développeurs → Clés API |
+| `STRIPE_WEBHOOK_SECRET` | secret du webhook (`whsec_…`) pointant vers `https://<api>/api/stripe/webhook`, événement `checkout.session.completed` |
+
+La réservation n'est confirmée que par ce webhook signé (R8) ; la disponibilité est revérifiée sous verrou, et le client est
+remboursé automatiquement si le matériel a été réservé entre-temps (R2).
+
 ## Tests
 
 ```bash
-cd backend && ./mvnw test    # 44 tests : JUnit 5, MockMvc
-cd frontend && npm test      # 29 tests : Vitest, Testing Library
+cd backend && ./mvnw test    # 62 tests : JUnit 5, MockMvc
+cd frontend && npm test      # 34 tests : Vitest, Testing Library
 ```
 
 Les tests sont écrits avant le code (TDD) à partir des critères d'acceptation. GitHub Actions les exécute à chaque envoi, avec une
