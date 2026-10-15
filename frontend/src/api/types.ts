@@ -119,6 +119,7 @@ export type BookingRequest = {
   installation: boolean
   note: string
   lines: { itemId: number; quantity: number }[]
+  prestationIds: number[]
 }
 
 export type Estimate = {
@@ -130,9 +131,11 @@ export type Estimate = {
   distanceKm?: number
   installation: boolean
   lines: { itemId: number; name: string; quantity: number; dayPriceCents: number; lineTotalCents: number; available: number }[]
+  prestations: PrestationLine[]
   rentalCents: number
   setupCents: number
   deliveryCents: number
+  prestationsCents: number
   totalCents: number
   vatCents: number
   depositCents: number
@@ -170,9 +173,11 @@ export type Booking = {
   installation: boolean
   note?: string
   lines: BookingLine[]
+  prestations: PrestationLine[]
   rentalCents: number
   setupCents: number
   deliveryCents: number
+  prestationsCents: number
   totalCents: number
   vatCents: number
   discountCents: number
@@ -227,6 +232,30 @@ export type PlanningTask = {
 }
 
 export type ReturnCount = { itemId: number; returned: number; damaged: number; missing: number }
+
+/** US-18 : prestation proposee avec le materiel (prix TTC « a partir de »). */
+export type Prestation = { id: number; name: string; description?: string; priceCents: number; active: boolean }
+export type PrestationLine = { id: number; name: string; priceCents: number }
+
+export type ContactForm = { name: string; email: string; phone: string; eventDate: string; message: string }
+export type ContactMessage = Omit<ContactForm, 'phone' | 'eventDate'> & { id: number; phone?: string; eventDate?: string; handled: boolean; createdAt: string }
+
+export type Dashboard = {
+  revenueThisMonthCents: number
+  revenueByMonth: { month: string; label: string; cents: number }[]
+  pendingRequests: number
+  quotesAwaiting: number
+  upcomingBookings: number
+  depositsHeld: number
+  depositsHeldCents: number
+  balanceDueCents: number
+  unhandledMessages: number
+  topItems: { name: string; quantity: number }[]
+  nextBookings: { id: number; reference: string; customer: string; startDate: string; deliveryMode: DeliveryMode; status: BookingStatus }[]
+}
+
+/** Site de demonstration : comptes publics affiches sur les pages de connexion. */
+export type DemoInfo = { enabled: boolean; password?: string; accounts: { email: string; role: Role; name: string }[] }
 
 export type PaymentMethod = 'CARTE' | 'VIREMENT' | 'CHEQUE' | 'ESPECES'
 

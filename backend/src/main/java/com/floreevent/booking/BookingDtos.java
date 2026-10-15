@@ -36,7 +36,9 @@ public final class BookingDtos {
 			@Size(max = 255) String address,
 			boolean installation,
 			@Size(max = 1000, message = "1000 caractères maximum.") String note,
-			@NotEmpty(message = "Ajoutez au moins un article.") List<@Valid LineRequest> lines) {
+			@NotEmpty(message = "Ajoutez au moins un article.") List<@Valid LineRequest> lines,
+			/** US-18 : prestations souhaitees (facultatif). */
+			List<Long> prestationIds) {
 	}
 
 	/** Article tel que les visiteurs le voient : ni reference interne, ni valeur de remplacement. */
@@ -52,20 +54,25 @@ public final class BookingDtos {
 		}
 	}
 
+	public record PrestationLine(Long id, String name, int priceCents) {
+	}
+
 	public record EstimateLine(Long itemId, String name, int quantity, int dayPriceCents, int lineTotalCents, int available) {
 	}
 
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	public record EstimateResponse(LocalDate startDate, LocalDate endDate, int days, DeliveryMode deliveryMode, String address,
-			Integer distanceKm, boolean installation, List<EstimateLine> lines, int rentalCents, int setupCents, int deliveryCents,
-			int totalCents, int vatCents, int depositCents, int securityDepositCents, boolean bookable, List<String> problems) {
+			Integer distanceKm, boolean installation, List<EstimateLine> lines, List<PrestationLine> prestations, int rentalCents,
+			int setupCents, int deliveryCents, int prestationsCents, int totalCents, int vatCents, int depositCents,
+			int securityDepositCents, boolean bookable, List<String> problems) {
 
 		public static EstimateResponse of(Estimate e) {
 			return new EstimateResponse(e.startDate(), e.endDate(), e.days(), e.deliveryMode(), e.address(), e.distanceKm(),
 					e.installation(),
 					e.lines().stream().map(l -> new EstimateLine(l.item().getId(), l.item().getName(), l.quantity(),
 							l.item().getDayPriceCents(), l.lineTotalCents(), l.available())).toList(),
-					e.rentalCents(), e.setupCents(), e.deliveryCents(), e.totalCents(), e.vatCents(), e.depositCents(),
+					e.prestations().stream().map(p -> new PrestationLine(p.getId(), p.getName(), p.getPriceCents())).toList(),
+					e.rentalCents(), e.setupCents(), e.deliveryCents(), e.prestationsCents(), e.totalCents(), e.vatCents(), e.depositCents(),
 					e.securityDepositCents(), e.bookable(), e.problems());
 		}
 	}
@@ -106,8 +113,8 @@ public final class BookingDtos {
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	public record BookingResponse(Long id, String reference, BookingStatus status, String statusLabel, CustomerInfo customer,
 			LocalDate startDate, LocalDate endDate, int days, DeliveryMode deliveryMode, String address, Integer distanceKm,
-			boolean installation, String note, List<LineResponse> lines, int rentalCents, int setupCents, int deliveryCents,
-			int discountCents, int totalCents, int vatCents, int depositCents, int securityDepositCents, String quoteMessage,
+			boolean installation, String note, List<LineResponse> lines, List<PrestationLine> prestations, int rentalCents,
+			int setupCents, int deliveryCents, int prestationsCents, int discountCents, int totalCents, int vatCents, int depositCents, int securityDepositCents, String quoteMessage,
 			LocalDate quoteValidUntil, boolean quoteExpired, Integer cancellationFeeCents, int amountDueCents, int paidCents,
 			int balanceCents, List<PaymentResponse> payments, List<InvoiceResponse> invoices, Instant deliveredAt, Instant returnedAt,
 			PaymentMethod securityDepositMethod, Integer securityDepositReturnedCents, int damageCents, Instant createdAt,
@@ -120,7 +127,8 @@ public final class BookingDtos {
 					new CustomerInfo(c.getId(), c.getFullName(), c.getCompany(), c.getPhone(), c.getEmail()), b.getStartDate(),
 					b.getEndDate(), b.getDays(), b.getDeliveryMode(), b.getAddress(), b.getDistanceKm(), b.isInstallation(), b.getNote(),
 					b.getLines().stream().map(LineResponse::of).toList(),
-					b.getRentalCents(), b.getSetupCents(), b.getDeliveryCents(), b.getDiscountCents(), b.getTotalCents(),
+					b.getPrestations().stream().map(p -> new PrestationLine(p.getPrestationId(), p.getName(), p.getPriceCents())).toList(),
+					b.getRentalCents(), b.getSetupCents(), b.getDeliveryCents(), b.getPrestationsCents(), b.getDiscountCents(), b.getTotalCents(),
 					com.floreevent.quote.Pricing.vatIncluded(b.getTotalCents()), b.getDepositCents(), b.getSecurityDepositCents(),
 					b.getQuoteMessage(), b.getQuoteValidUntil(), b.isQuoteExpired(), b.getCancellationFeeCents(), b.getAmountDueCents(),
 					b.getPaidCents(), b.getBalanceCents(), b.getPayments().stream().map(p -> PaymentResponse.of(p, forTeam)).toList(),

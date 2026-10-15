@@ -14,7 +14,7 @@ import { SelectionProvider } from '../features/quote/Selection'
 vi.mock('../api/client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../api/client')>()),
   authApi: { login: vi.fn(), me: vi.fn(), register: vi.fn() },
-  catalogApi: { items: vi.fn(), item: vi.fn(), categories: vi.fn() },
+  catalogApi: { items: vi.fn(), item: vi.fn(), categories: vi.fn(), prestations: vi.fn() },
   quoteApi: { estimate: vi.fn() },
   myBookingsApi: { request: vi.fn(), list: vi.fn(), get: vi.fn(), cancel: vi.fn() },
 }))
@@ -74,9 +74,11 @@ const estimate: Estimate = {
   deliveryMode: 'RETRAIT',
   installation: false,
   lines: [{ itemId: 1, name: 'Barnum 3 x 6 m', quantity: 2, dayPriceCents: 15000, lineTotalCents: 60000, available: 4 }],
+  prestations: [],
   rentalCents: 60000,
   setupCents: 0,
   deliveryCents: 0,
+  prestationsCents: 0,
   totalCents: 60000,
   vatCents: 10000,
   depositCents: 18000,
@@ -90,6 +92,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.mocked(catalogApi.categories).mockResolvedValue([])
   vi.mocked(quoteApi.estimate).mockResolvedValue(estimate)
+  vi.mocked(catalogApi.prestations).mockResolvedValue([])
 })
 
 describe('Catalogue public (US-05)', () => {
@@ -141,6 +144,7 @@ describe('Devis en ligne (US-07)', () => {
       installation: false,
       note: 'Mariage',
       lines: [{ itemId: 1, quantity: 2 }],
+      prestationIds: [],
     })
     expect(await screen.findByText('Suivi de la demande')).toBeInTheDocument()
     expect(JSON.parse(localStorage.getItem('floreevent_selection')!).lines).toEqual([])

@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.transaction.annotation.Transactional;
 
 import com.jayway.jsonpath.JsonPath;
+import com.floreevent.mail.EmailService;
 import com.floreevent.payment.PaymentGateway;
 import com.floreevent.quote.Geocoder;
 import com.floreevent.security.JwtService;
@@ -58,6 +59,10 @@ public abstract class IntegrationTest {
 	/** Paiement par carte simule : les tests n'appellent jamais Stripe. */
 	@MockitoBean
 	protected PaymentGateway gateway;
+
+	/** Emails simules : les tests verifient qui recoit quoi, sans rien envoyer. */
+	@MockitoBean
+	protected EmailService emails;
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;

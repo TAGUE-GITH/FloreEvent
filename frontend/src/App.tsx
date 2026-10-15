@@ -4,6 +4,8 @@ import { STAFF_ROLES } from './api/types'
 import type { Role } from './api/types'
 import { RequireAuth } from './auth/RequireAuth'
 import Layout from './components/Layout'
+import ForgotPasswordPage from './features/auth/ForgotPasswordPage'
+import ResetPasswordPage from './features/auth/ResetPasswordPage'
 import StaffLoginPage from './features/auth/StaffLoginPage'
 import BookingDetailPage from './features/bookings/BookingDetailPage'
 import BookingsPage from './features/bookings/BookingsPage'
@@ -14,20 +16,25 @@ import ItemFormPage from './features/catalog/ItemFormPage'
 import ItemsPage from './features/catalog/ItemsPage'
 import MaintenancePage from './features/catalog/MaintenancePage'
 import ClientBookingPage from './features/client/ClientBookingPage'
+import ClientProfilePage from './features/client/ClientProfilePage'
 import ClientSpacePage from './features/client/ClientSpacePage'
 import SimulatedPaymentPage from './features/client/SimulatedPaymentPage'
 import StaffHomePage from './features/home/StaffHomePage'
+import LegalNoticePage from './features/legal/LegalNoticePage'
 import PrivacyPage from './features/legal/PrivacyPage'
 import TermsPage from './features/legal/TermsPage'
 import ProfilePage from './features/profile/ProfilePage'
 import CatalogPage from './features/public/CatalogPage'
 import ClientLoginPage from './features/public/ClientLoginPage'
+import ContactPage from './features/public/ContactPage'
 import HomePage from './features/public/HomePage'
 import PublicItemPage from './features/public/PublicItemPage'
 import PublicLayout from './features/public/PublicLayout'
 import RegisterPage from './features/public/RegisterPage'
 import QuotePage from './features/quote/QuotePage'
 import UsersPage from './features/users/UsersPage'
+import MessagesPage from './features/home/MessagesPage'
+import PrestationsPage from './features/catalog/PrestationsPage'
 
 function NotFoundPage() {
   return (
@@ -57,6 +64,11 @@ export default function App() {
         <Route path="inscription" element={<RegisterPage />} />
         <Route path="conditions-generales" element={<TermsPage />} />
         <Route path="confidentialite" element={<PrivacyPage />} />
+        <Route path="mentions-legales" element={<LegalNoticePage />} />
+        <Route path="contact" element={<ContactPage />} />
+        <Route path="mot-de-passe-oublie" element={<ForgotPasswordPage />} />
+        <Route path="reinitialiser" element={<ResetPasswordPage />} />
+        <Route path="mon-espace/profil" element={only(['CLIENT'], <ClientProfilePage />)} />
         <Route path="mon-espace" element={only(['CLIENT'], <ClientSpacePage />)} />
         <Route path="mon-espace/reservations/:id" element={only(['CLIENT'], <ClientBookingPage />)} />
         <Route path="paiement-simule" element={only(['CLIENT'], <SimulatedPaymentPage />)} />
@@ -75,6 +87,8 @@ export default function App() {
         <Route path="catalogue/:id/modifier" element={only(['GERANT'], <ItemFormPage />)} />
         <Route path="reparations" element={<MaintenancePage />} />
         <Route path="categories" element={only(['GERANT'], <CategoriesPage />)} />
+        <Route path="prestations" element={only(['GERANT'], <PrestationsPage />)} />
+        <Route path="messages" element={only(['GERANT', 'COMMERCIAL'], <MessagesPage />)} />
         <Route path="equipe" element={only(['GERANT'], <UsersPage />)} />
         <Route path="profil" element={<ProfilePage />} />
       </Route>

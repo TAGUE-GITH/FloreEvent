@@ -26,10 +26,12 @@ public class PaymentService {
 	private final AvailabilityService availability;
 	private final InvoiceService invoices;
 	private final PaymentGateway gateway;
+	private final BookingEmails emails;
 	private final String frontendUrl;
 
 	public PaymentService(PaymentRepository payments, AvailabilityService availability, InvoiceService invoices,
-			PaymentGateway gateway, @Value("${app.frontend-url}") String frontendUrl) {
+			PaymentGateway gateway, BookingEmails emails, @Value("${app.frontend-url}") String frontendUrl) {
+		this.emails = emails;
 		this.payments = payments;
 		this.availability = availability;
 		this.invoices = invoices;
@@ -75,6 +77,7 @@ public class PaymentService {
 			if (shortage == null) {
 				booking.confirm("Acompte de " + amount + " payé par carte", null);
 				invoices.forPayment(payment);
+				emails.confirmed(booking);
 			} else refund(payment, booking, "Paiement de " + amount + " remboursé : " + shortage);
 		} else if (AFTER_CONFIRMATION.contains(booking.getStatus()) && booking.getBalanceCents() >= 0) {
 			booking.addNote("Paiement de " + amount + " reçu par carte", null);
@@ -111,6 +114,7 @@ public class PaymentService {
 			if (shortage != null) throw ApiException.conflict(shortage);
 			payment = payments.save(Payment.offline(booking, request.method(), amount, note, author));
 			booking.confirm("Acompte reçu : " + label, author);
+			emails.confirmed(booking);
 		} else {
 			payment = payments.save(Payment.offline(booking, request.method(), amount, note, author));
 			booking.addNote("Paiement reçu : " + label, author);

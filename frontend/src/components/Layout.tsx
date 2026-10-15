@@ -1,4 +1,4 @@
-import { CalendarCheck, CalendarDays, Flower2, FolderTree, Globe, Home, LogOut, Menu, Package, Users, Wrench, X } from 'lucide-react'
+import { CalendarCheck, CalendarDays, Flower2, Mail, Sparkles, FolderTree, Globe, Home, LogOut, Menu, Package, Users, Wrench, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
@@ -17,6 +17,8 @@ const NAV: NavItem[] = [
   { to: '/gestion/catalogue', label: 'Catalogue', Icon: Package },
   { to: '/gestion/reparations', label: 'Matériel en réparation', Icon: Wrench },
   { to: '/gestion/categories', label: 'Catégories', Icon: FolderTree, roles: ['GERANT'] },
+  { to: '/gestion/prestations', label: 'Prestations', Icon: Sparkles, roles: ['GERANT'] },
+  { to: '/gestion/messages', label: 'Messages', Icon: Mail, roles: ['GERANT', 'COMMERCIAL'] },
   { to: '/gestion/equipe', label: 'Équipe', Icon: Users, roles: ['GERANT'] },
   { to: '/', label: 'Voir le site', Icon: Globe },
 ]

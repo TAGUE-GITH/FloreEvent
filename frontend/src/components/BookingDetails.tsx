@@ -79,6 +79,9 @@ export function BookingDetails({ booking: b, aside, filesPath }: { booking: Book
         <p className="text-slate-600">Location {formatPeriod(b.startDate, b.endDate)}</p>
         <Row label={`Location (${b.days} jour${b.days > 1 ? 's' : ''})`} value={formatEuros(b.rentalCents)} />
         {b.setupCents > 0 && <Row label="Installation" value={formatEuros(b.setupCents)} />}
+        {b.prestations.map((p) => (
+          <Row key={p.id} label={p.name} value={formatEuros(p.priceCents)} />
+        ))}
         <Row label="Livraison" value={b.deliveryCents ? formatEuros(b.deliveryCents) : 'Gratuit'} />
         {b.discountCents > 0 && <Row label="Remise" value={`− ${formatEuros(b.discountCents)}`} />}
         <div className="flex items-baseline justify-between border-t border-stone-100 pt-2">

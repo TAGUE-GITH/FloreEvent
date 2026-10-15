@@ -18,6 +18,8 @@ import com.floreevent.common.ApiException;
 import com.floreevent.common.Dates;
 import com.floreevent.common.Terms;
 import com.floreevent.customer.Customer;
+import com.floreevent.prestation.Prestation;
+import com.floreevent.prestation.PrestationRepository;
 import com.floreevent.quote.Geocoder;
 import com.floreevent.quote.Pricing;
 import com.floreevent.user.User;
@@ -34,14 +36,19 @@ public class BookingService {
 	private final Pricing pricing;
 	private final Geocoder geocoder;
 	private final CancellationService cancellations;
+	private final PrestationRepository prestations;
+	private final BookingEmails emails;
 	private final double depotLatitude;
 	private final double depotLongitude;
 	private final int quoteValidityDays;
 
 	public BookingService(ItemRepository items, BookingRepository bookings, UserRepository users, AvailabilityService availability,
-			Pricing pricing, Geocoder geocoder, CancellationService cancellations, @Value("${app.depot.latitude}") double depotLatitude,
+			Pricing pricing, Geocoder geocoder, CancellationService cancellations, PrestationRepository prestations, BookingEmails emails,
+			@Value("${app.depot.latitude}") double depotLatitude,
 			@Value("${app.depot.longitude}") double depotLongitude, @Value("${app.quote.validity-days}") int quoteValidityDays) {
 		this.cancellations = cancellations;
+		this.prestations = prestations;
+		this.emails = emails;
 		this.quoteValidityDays = quoteValidityDays;
 		this.items = items;
 		this.bookings = bookings;
@@ -95,10 +102,22 @@ public class BookingService {
 			if (request.installation()) setup += item.getSetupPriceCents() * quantity;
 			replacementValue += (long) item.getReplacementValueCents() * quantity;
 		}
-		int total = rental + setup + deliveryCents;
+		List<Prestation> chosen = chosenPrestations(request.prestationIds());
+		int prestationsCents = chosen.stream().mapToInt(Prestation::getPriceCents).sum();
+		int total = rental + setup + deliveryCents + prestationsCents;
 		return new Estimate(request.startDate(), request.endDate(), days, request.deliveryMode(), address, distanceKm,
-				request.installation(), lines, rental, setup, deliveryCents, total, Pricing.vatIncluded(total), pricing.deposit(total),
+				request.installation(), lines, chosen, rental, setup, deliveryCents, prestationsCents, total, Pricing.vatIncluded(total), pricing.deposit(total),
 				pricing.securityDeposit(replacementValue), problems);
+	}
+
+	/** US-18 : prestations actives choisies par le client (sans doublon). */
+	private List<Prestation> chosenPrestations(List<Long> ids) {
+		if (ids == null || ids.isEmpty()) return List.of();
+		List<Prestation> chosen = new ArrayList<>();
+		for (Long id : new java.util.LinkedHashSet<>(ids))
+			chosen.add(prestations.findById(id).filter(Prestation::isActive)
+					.orElseThrow(() -> ApiException.badRequest("Une prestation choisie n'est plus proposée.")));
+		return chosen;
 	}
 
 	/** Les lignes du meme article sont regroupees (ordre de la selection conserve). */
@@ -158,6 +177,7 @@ public class BookingService {
 		String message = request.message() == null || request.message().isBlank() ? null : request.message().trim();
 		booking.sendQuote(discount, message, Dates.today().plusDays(quoteValidityDays), pricing.deposit(booking.grossCents() - discount),
 				reload(author));
+		emails.quoteSent(booking);
 		return booking;
 	}
 

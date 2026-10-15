@@ -75,6 +75,10 @@ public class Booking {
 	@Column(name = "delivery_cents", nullable = false)
 	private int deliveryCents;
 
+	/** US-18 : prestations demandees (decoration florale...). */
+	@Column(name = "prestations_cents", nullable = false)
+	private int prestationsCents;
+
 	@Column(name = "total_cents", nullable = false)
 	private int totalCents;
 
@@ -137,6 +141,10 @@ public class Booking {
 
 	@OneToMany(mappedBy = "booking", cascade = CascadeType.ALL)
 	@OrderBy("id")
+	private List<BookingPrestation> prestations = new ArrayList<>();
+
+	@OneToMany(mappedBy = "booking", cascade = CascadeType.ALL)
+	@OrderBy("id")
 	private List<Payment> payments = new ArrayList<>();
 
 	@OneToMany(mappedBy = "booking", cascade = CascadeType.ALL)
@@ -159,11 +167,13 @@ public class Booking {
 		this.rentalCents = estimate.rentalCents();
 		this.setupCents = estimate.setupCents();
 		this.deliveryCents = estimate.deliveryCents();
+		this.prestationsCents = estimate.prestationsCents();
 		this.totalCents = estimate.totalCents();
 		this.depositCents = estimate.depositCents();
 		this.securityDepositCents = estimate.securityDepositCents();
 		this.termsVersion = termsVersion;
 		for (Estimate.Line line : estimate.lines()) lines.add(new BookingLine(this, line.item(), line.quantity(), line.lineTotalCents()));
+		for (var prestation : estimate.prestations()) prestations.add(new BookingPrestation(this, prestation));
 		events.add(new BookingEvent(this, BookingStatus.DEMANDE, null, author));
 	}
 
@@ -197,7 +207,7 @@ public class Booking {
 
 	/** Total avant remise : location, installation et livraison. */
 	int grossCents() {
-		return rentalCents + setupCents + deliveryCents;
+		return rentalCents + setupCents + deliveryCents + prestationsCents;
 	}
 
 	/** L'equipe ne donne pas suite a une demande (ou retire un devis). */
@@ -349,6 +359,14 @@ public class Booking {
 
 	public String getTermsVersion() {
 		return termsVersion;
+	}
+
+	public int getPrestationsCents() {
+		return prestationsCents;
+	}
+
+	public List<BookingPrestation> getPrestations() {
+		return prestations;
 	}
 
 	public int getDiscountCents() {

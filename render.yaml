@@ -1,0 +1,40 @@
+# Service de l'API sur Render (offre gratuite), construit avec backend/Dockerfile.
+# Les valeurs secretes (sync: false) se saisissent dans le tableau de bord de Render, jamais dans le code.
+services:
+  - type: web
+    name: floreevent-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: frankfurt
+    healthCheckPath: /api/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      # Cle aleatoire generee par Render
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false
+      # Site de demonstration (portfolio) : donnees fictives et comptes publics. false pour la vraie entreprise.
+      - key: APP_DEMO
+        value: "true"
+      # Sans cle Stripe : page de paiement simulee (aucun argent echange)
+      - key: PAYMENT_SIMULATION
+        value: "true"
+      - key: BREVO_API_KEY
+        sync: false
+      - key: MAIL_SENDER_EMAIL
+        sync: false
+      # Facultatif : Stripe en mode test (sk_test_... et whsec_...)
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false

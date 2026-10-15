@@ -13,11 +13,13 @@ export type Selection = {
   /** Precisions sur l'evenement (gardees si le visiteur cree son compte entre-temps) */
   note: string
   lines: SelectionLine[]
+  /** US-18 : prestations souhaitees */
+  prestationIds: number[]
 }
 
 type ItemLike = { id: number; name: string; imageUrl?: string; dayPriceCents: number; setupPriceCents: number }
 
-export const emptySelection = (): Selection => ({ startDate: '', endDate: '', deliveryMode: 'RETRAIT', address: '', installation: false, note: '', lines: [] })
+export const emptySelection = (): Selection => ({ startDate: '', endDate: '', deliveryMode: 'RETRAIT', address: '', installation: false, note: '', lines: [], prestationIds: [] })
 
 export function addItem(selection: Selection, item: ItemLike, quantity: number): Selection {
   const existing = selection.lines.find((line) => line.itemId === item.id)
@@ -54,6 +56,7 @@ export function toRequest(selection: Selection): BookingRequest {
     installation: delivery && selection.installation,
     note: selection.note,
     lines: selection.lines.map((line) => ({ itemId: line.itemId, quantity: line.quantity })),
+    prestationIds: selection.prestationIds ?? [],
   }
 }
 

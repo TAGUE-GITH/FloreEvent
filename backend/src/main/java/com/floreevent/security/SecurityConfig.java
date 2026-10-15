@@ -39,9 +39,9 @@ public class SecurityConfig {
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
 						// Acces public : sante, connexion, inscription des clients, photos, catalogue et estimation des prix
-						.requestMatchers("/api/health", "/api/auth/login", "/api/auth/register", "/error").permitAll()
+						.requestMatchers("/api/health", "/api/auth/login", "/api/auth/register", "/api/auth/forgot-password", "/api/auth/reset-password", "/api/demo", "/error").permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/images/*", "/api/catalog/**").permitAll()
-						.requestMatchers(HttpMethod.POST, "/api/quote/estimate", "/api/stripe/webhook").permitAll()
+						.requestMatchers(HttpMethod.POST, "/api/quote/estimate", "/api/stripe/webhook", "/api/contact").permitAll()
 						.anyRequest().authenticated())
 				// Sans jeton valide : 401 au lieu d'une page de connexion
 				.exceptionHandling(ex -> ex.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
